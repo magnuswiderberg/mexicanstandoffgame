@@ -1,0 +1,161 @@
+﻿@page "/play/{GameId}"
+@using Game.Model
+@using Shared.Cards
+
+@code
+{
+    [Parameter] public string? GameId { get; set; }
+}
+
+<div class="mx-auto flex max-w-2xl flex-col items-center">
+    <h1>Mexican Standoff</h1>
+
+    @if (_game == null)
+    {
+        <ErrorBox>
+            Sad story.
+            <br />Gremlins devoured that game.
+        </ErrorBox>
+        <a href="/" class="button mt-8">&lArr; Quit</a>
+    }
+    else if (_gameIsFull)
+    {
+        <ErrorBox>
+            Dang!
+            <br />Some gremlin seem to have taken the last seat in the game.
+        </ErrorBox>
+        <a href="/" class="button mt-8">To start page</a>
+    }
+    else if (_player == null)
+    {
+        <ErrorBox>
+            Whut?!
+            <br />Gremlins disturbed the game engine to the point that you got kicked out.
+            <br />Sorry about that&hellip;
+        </ErrorBox>
+        <a href="/" class="button mt-8">To start page</a>
+    }
+    else if (_game.State == GameState.Created)
+    {
+        <div class="mt-10">
+            <GameCharacter Id="@_player.Character.Id" Size="large" />
+        </div>
+        <div class="mt-6 text-lg">Joining game <span class="uppercase">@_game.Id</span>.</div>
+        <div class="mt-6">Players so far:</div>
+        <p>@string.Join(", ", _game.Players.Select(x => x.Id == _player.Id ? $"{x.Name} (YOU)" : x.Name))</p>
+
+        <div class="mt-10"><em>Waiting for the game to start</em></div>
+        <div class="mt-5"><WaitingAnimation /></div>
+        <a href="/" class="button mt-8" @onclick="Quit">&lArr; Quit</a>
+    }
+    else if (_game.State is GameState.Playing)
+    {
+        <div class="mt-5 gap-5 flex flex-col items-center">
+            <GameCharacter Id="@_player.Character.Id" Size="large" />
+            @_player.Name
+            <br/>
+            @_player.Id
+        </div>
+
+        @* TODO: has quit as new Player state *@
+        if (!_player.Alive)
+        {
+            <div class="mt-10 text-3xl">
+                <PlayerHealth Player="_player" Rules="_game.Rules" />
+            </div>
+        }
+        else
+        {
+            <h2 class="@_appearClassName">Select a card to play in round @_game.Rounds:</h2>
+
+            @* @if (SecondsLeft != 0)
+                    {
+                        <text>in  @SecondsLeft s</text>
+                    } *@
+            <div class="mt-4 gap-5 flex flex-col">
+                <div class="selectable-cards">
+
+                    @foreach (var card in _game.PlayableCards(_player))
+                    {
+                        <div @onclick="() => CardClicked(card)" class="selectable-card @(IsSelected(card, SelectedCard) ? "selected" : "")">
+                            <p class="card-name">@card.Name</p>
+                            @switch (card.Type)
+                            {
+                                case CardType.Dodge:
+                                    <i class="dodge card-size"></i>
+                                    break;
+                                case CardType.Load:
+                                    <i class="bullet card-size"></i>
+                                    break;
+                                case CardType.Chest:
+                                    <i class="chest card-size"></i>
+                                    break;
+                                case CardType.Attack:
+                                    <GameCharacter Id="@(((AttackCard)card).Target.Id)" Size="medium" />
+                                    break;
+                            }
+                        </div>
+                    }
+                </div>
+                <button class="button neutral" @onclick="() => CardClicked(null)">De-select</button>
+            </div>
+        }
+    }
+    else if (_game.State is GameState.Ended)
+    {
+        @* <div class="mt-6">
+            <img src="img/signature-villans.jpg" class="max-w-[100px]" />
+        </div> *@
+        
+        <div class="mt-10 gap-5 flex flex-col items-center">
+            <GameCharacter Id="@_player.Character.Id" Size="large" />
+            @_player.Name
+            <br/>
+            @_player.Id
+        </div>
+
+
+        <div class="mt-10 bg-white p-5 flex flex-col items-center rounded-lg text-lg">
+            <h2 class="text-xl font-semibold uppercase">Game over</h2>
+
+            @if (_player.Winner)
+            {
+                <div class="my-5 text-lg">You win!</div>
+                <span class="text-5xl">🏆</span>
+            }
+            else if (_game.Winners.Count == 0)
+            {
+                <div class="mt-5 text-lg"><em>There is no winner&hellip;</em></div>
+            }
+            else
+            {
+                <div class="mt-5 text-xl">
+                    Winner is @string.Join(", ", _game.Winners.Select(w => w.Name))
+                </div>
+            }
+            @if (!_player.Alive)
+            {
+                <div class="mt-10">
+                    You are
+                    <PlayerHealth Player="_player" Rules="_game.Rules"/>
+                </div>
+            }
+        </div>
+
+        <button class="mt-10 button" @onclick="TryRejoin">Rejoin</button>
+
+        @if (_rejoinStatus != null)
+        {
+            <div class="appear mt-5 text-center">@_rejoinStatus</div>
+        }
+    }
+    else
+    {
+        <div>
+            What now? <br />
+            Game state: @_game.State<br />
+            Player: @_player?.Id
+        </div>
+    }
+
+</div>

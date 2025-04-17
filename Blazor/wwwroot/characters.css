@@ -1,0 +1,82 @@
+.character-wrapper {
+    @apply inline-block;
+}
+
+.character {
+    @apply flex flex-col gap-1 items-center;
+
+    --bg-color: white;
+}
+
+.character span:first-child {
+    background-image: url("img/character.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    border-radius: 50%;
+    border: 1px solid black;
+    background-color: var(--bg-color);
+}
+
+.character .size-medium {
+    background-size: 2.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+}
+
+.character .size-small {
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+}
+
+.character .size-large {
+    background-size: 4rem;
+    width: 5rem;
+    height: 5rem;
+}
+
+/* TODO: Find better colors */
+.character .character-1 {
+    --bg-color: #0082c8;
+}
+
+.character .character-2 {
+    --bg-color: #911eb4;
+}
+
+.character .character-3 {
+    --bg-color: #ffd8b1;
+}
+
+.character .character-4 {
+    --bg-color: #46f0f0;
+}
+
+.character .character-5 {
+    --bg-color: #f58231;
+}
+
+.character .character-6 {
+    --bg-color: #808000;
+}
+
+.character .character-7 {
+    --bg-color: #808080;
+}
+
+.character .character-8 {
+    --bg-color: #FFFFFF;
+}
+
+.character .shot {
+    /* TODO */
+    box-shadow: -0.3rem -0.15rem 2rem var(--color-red-900);
+    Xbackground-size: 2rem;
+    Xwidth: 2.25rem;
+    Xheight: 2.25rem;
+}
+
+.character .name-under {
+    font-size: small;
+    overflow: auto;
+}

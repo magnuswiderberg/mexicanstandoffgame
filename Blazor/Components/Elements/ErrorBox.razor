@@ -1,0 +1,8 @@
+﻿<div class="mt-10 rounded-xl bg-red-100 p-6">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = null!;
+}

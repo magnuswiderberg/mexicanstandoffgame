@@ -1,0 +1,32 @@
+﻿@using Shared.Cards
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public string Size { get; set; } = "medium";
+
+    [Parameter] public string? UseName { get; set; }
+
+    private Character? _character;
+
+    protected override void OnInitialized()
+    {
+        _character = Character.Get(Id);
+    }
+}
+
+<span class="character-wrapper">
+    <span class="character">
+        <span class="character-@Id size-@Size"></span>
+
+        @if (UseName != null)
+        {
+            switch (UseName)
+            {
+                case "under":
+                    <span class="name-under">@_character?.Name</span>
+                    break;
+            }
+        }
+    </span>
+</span>

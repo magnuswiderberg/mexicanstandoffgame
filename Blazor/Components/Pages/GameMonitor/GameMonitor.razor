@@ -1,0 +1,51 @@
+﻿@page "/game-monitor"
+@page "/game-monitor/{GameId}"
+@using Game.Model
+
+@code
+{
+    [Parameter] public string? GameId { get; set; }
+}
+
+<div class="mx-auto flex flex-col items-center">
+
+    <h1>Mexican Standoff</h1>
+
+    <div class="mt-6">
+        <img src="img/signature-villans.jpg" class="max-w-[100px]"/>
+    </div>
+    
+
+    @if (_game == null)
+    {
+        <ErrorBox>
+            Sad story.
+            <br/>Gremlins devoured that game.
+        </ErrorBox>
+        <a href="/" class="button mt-10" @onclick="MaybeResetDevGame">Back to start</a>
+    }
+    else if (_game.State == GameState.Created)
+    {
+        <WaitForJoin Game="_game"
+                        PlayerCountChangedAction="PlayerCountChanged"
+                        GameStateChangedAction="() => InvokeAsync(StateHasChanged)"/>
+        
+        <a href="/" class="button neutral mt-10">&lArr; Quit</a>
+    }
+    else if (_game.State is GameState.Playing or GameState.Ended)
+    {
+        <ShowGame Game="_game" GameStateChangedAction="() => InvokeAsync(StateHasChanged)"/>
+
+        @if (_game.State == GameState.Ended)
+        {
+            <button class="button mt-10" @onclick="PlayAgain">Play again</button>
+            <a href="/" class="button neutral mt-10" @onclick="MaybeResetDevGame">Back to start</a>
+        }
+    }
+    else
+    {
+        <div>
+            Game state: @_game.State
+        </div>
+    }
+</div>

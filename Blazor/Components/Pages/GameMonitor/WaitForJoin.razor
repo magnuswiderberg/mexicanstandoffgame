@@ -1,0 +1,41 @@
+﻿@using Game.Logic
+
+@code
+{
+    [Parameter] public Game Game { get; set; } = null!;
+    [Parameter] public Action PlayerCountChangedAction { get; set; } = null!;
+    [Parameter] public Action GameStateChangedAction { get; set; } = null!;
+}
+
+<div class="mx-auto flex max-w-2xl flex-col items-center">
+
+    <div class="mt-10"><img src="data:image/png;base64,@_qrCodeImageAsBase64" class="max-w-64" /></div>
+    
+    <div class="mt-1">
+        <a href="@_gameUrl">@_gameUrl</a>
+        <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">&#128209;</span>
+    </div>
+
+    <div class="mt-10 flex flex-col gap-3">
+        @foreach (var player in Game.Players)
+        {
+            <div class="appear flex items-center gap-5">
+                <GameCharacter Id="@player.Character.Id" />
+                @player.Name
+            </div>
+        }
+    </div>
+
+    @if (Game.Players.Count < Game.Rules.MinimumPlayerCount)
+    {
+        <div class="mt-10"><em>Waiting for at least @Game.Rules.MinimumPlayerCount players&hellip;</em></div>
+        <div class="mt-10"><WaitingAnimation /></div>
+    }
+    else
+    {
+        <button class="button large mt-8 cursor-pointer" @onclick="StartGame">Start game</button>
+    }
+
+    <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>
+
+</div>

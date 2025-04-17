@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<!-- Note: Depends on Directory.Build.props -->
+
+	<PropertyGroup>
+		<RootNamespace>Blazor</RootNamespace>
+		<AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
+	</PropertyGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="npm run build:css" />
+	</Target>
+
+	<ItemGroup>
+		<PackageReference Include="QRCoder" Version="1.6.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Game\Game.csproj" />
+	  <ProjectReference Include="..\Shared\Shared.csproj" />
+	</ItemGroup>
+
+</Project>

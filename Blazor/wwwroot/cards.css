@@ -1,0 +1,106 @@
+.selectable-cards {
+    /* display: flex;
+    flex-wrap: wrap;
+    justify-content: center; */
+    @apply flex flex-wrap justify-center;
+}
+
+.selectable-card {
+    /*display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;*/
+    text-align: center;
+    width: 7rem;
+    height: 10rem;
+    padding: 0.25em;
+    margin: 0.2rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    color: black;
+    background-color: #fff;
+    border: 1px solid var(--major-text-fg);
+    cursor: pointer;
+    touch-action: none;
+    transition: all 0.8s;
+    @apply shadow-md shadow-amber-900/40;
+}
+
+.selectable-card.selected {
+    @apply bg-amber-100 text-amber-900;
+}
+
+.selectable-card .card-name {
+    margin: 1rem 0;
+    text-transform: uppercase;
+}
+
+.bullet {
+    display: inline-block;
+    background-image: url("./img/Bullet.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+    margin-right: -0.75em;
+}
+
+.bullet.card-size {
+    background-size: 3.5rem;
+    width: 4rem;
+    height: 4rem;
+    margin-right: 0;
+}
+
+.coin {
+    display: inline-block;
+    background-image: url("./img/Coin.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+}
+
+.coin.small {
+    background-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.chest {
+    display: inline-block;
+    background-image: url("./img/Chest.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+}
+
+.chest.card-size {
+    background-size: 3.5rem;
+    width: 4rem;
+    height: 4rem;
+}
+
+.dodge {
+    display: inline-block;
+    background-image: url("./img/Dodge.png");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 4.5rem;
+    width: 4rem;
+    height: 2.1rem;
+    vertical-align: middle;
+}
+
+.dodge.card-size {
+    background-size: 6rem;
+    width: 6rem;
+    height: 3.2rem;
+}

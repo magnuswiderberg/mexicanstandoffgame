@@ -1,0 +1,37 @@
+body {
+    @apply bg-zinc-100;
+}
+
+h1 {
+    color: var(--major-text-fg);
+    @apply text-2xl font-bold;
+}
+
+.emphasis {
+    @apply font-bold;
+    color: var(--major-text-fg);
+}
+
+a {
+    color: var(--major-text-fg);
+    border-bottom-color: var(--major-text-fg);
+    @apply border-b border-dashed pb-[1px] px-1;
+    @apply hover:border-solid;
+}
+
+.button {
+    color: var(--major-text-fg);
+    @apply bg-orange-100 px-10 py-3 font-semibold;
+    @apply rounded-full;
+    @apply border border-solid border-amber-900 shadow-lg shadow-amber-900/40;
+    @apply hover:bg-amber-900 hover:text-orange-100 hover:border-transparent;
+
+    &.large {
+        @apply text-2xl;
+    }
+
+    &.neutral {
+        @apply bg-white;
+        @apply hover:bg-amber-900 hover:text-orange-100;
+    }
+}

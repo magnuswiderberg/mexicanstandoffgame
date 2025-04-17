@@ -1,0 +1,172 @@
+﻿@using Game.Bots
+@using Game.Logic
+@using Game.Model
+
+@code
+{
+    [Parameter] public Game Game { get; set; } = null!;
+    [Parameter] public Action GameStateChangedAction { get; set; } = null!;
+}
+
+<div class="mx-auto flex flex-col items-center">
+
+    <div class="mt-10 p-4 bg-white flex flex-col items-center rounded-xl shadow-lg">
+        <h2 class="border-neutral-300 px-4 pb-1 border-b">
+            Round @Game.Rounds
+            @if (Game.State is GameState.Ended)
+            {
+                <span> &ndash; Game over</span>
+            }
+        </h2>
+        <h2>
+            @Game.Rules.CoinsToWin coins to win,
+            max @Game.Rules.ChestsPerPlayerCount[Game.Players.Count] on chest
+        </h2>
+    </div>
+
+    @if (_revealingRoundResultIndex is not null && _revealingRoundResultIndex < _lastRoundResult.Count)
+    {
+        var result = _lastRoundResult[_revealingRoundResultIndex.Value];
+        <div class="my-10 gap-5 p-10 bg-white flex items-center rounded-xl @_appearClassName">
+
+            <GameCharacter Id="@result.Source.Id" Size="large" />
+            <span class="uppercase">@result.Source.Name</span>
+
+            @switch (result.Type)
+            {
+                case RoundActionType.Dodge:
+                    <text>dodges</text>
+                    <i class="dodge card-size"></i>
+                    break;
+                case RoundActionType.Chest:
+                    <text>goes to chest</text>
+                    <i class="chest card-size"></i>
+                    break;
+                case RoundActionType.Load:
+                    <text>loads the gun</text>
+                    <i class="bullet card-size"></i>
+                    break;
+                case RoundActionType.Attack:
+                    <text>attacks</text>
+                    <GameCharacter Id="@result.Target!.Id" Size="medium" />
+                    <span class="is-uppercase">@result.Target.Name</span>
+                    break;
+            }
+        </div>
+
+        <button class="button" @onclick="RevealNext">@RevealNextText()</button>
+        @* TODO: sounds *@
+    }
+    else
+    {
+        <div class="mt-10 p-4 bg-white flex flex-col items-center rounded-xl shadow-lg lg:text-xl">
+            <table id="game-monitor-game-state">
+                <thead>
+                    <tr>
+                        <th class="text-left">Player</th>
+                        <th>Life</th>
+                        <th>Gold</th>
+                        <th>Bullets</th>
+                        @if (Game.State == GameState.Playing)
+                        {
+                            <th>Trend</th>
+                            <th>Ready?</th>
+                        }
+                        @if (Game.State == GameState.Ended)
+                        {
+                            <th>Result</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var player in Game.Players)
+                    {
+                        <tr class="@(player.Winner ? "winner" : "")">
+                            <td class="gap-3 flex items-center justify-start" @ondblclick="() => RemovePlayer(player)"> @* TODO: confirm *@
+                                <GameCharacter Id="@player.Character.Id" />
+                                <span class="uppercase">
+                                    @player.Name
+                                    @if (player is BotPlayer)
+                                    {
+                                        <br />
+                                        <span>(bot)</span>
+                                    }
+                                    @* TODO: remove *@
+                                    <br/>
+                                    <span>@player.Id</span>
+                                </span>
+                            </td>
+                            
+                            <td>
+                                <PlayerHealth Player="player" Rules="Game.Rules" />
+                            </td>
+
+                            <td>
+                                @for (var i = 0; i < player.Coins; i++)
+                                {
+                                    <span>🪙</span>
+                                }
+                            </td>
+
+                            <td>
+                                @for (var i = 0; i < player.Bullets; i++)
+                                {
+                                    <img src="img/Bullet.svg" class="inline-block w-[20px]" />
+                                }
+                            </td>
+
+                            @if (Game.State == GameState.Playing)
+                            {
+                                <td class="trend has-text-grey-light">
+                                    @* <PlayerSuccessTrend Player="@player"/> *@
+
+                                    @foreach (var result in player.SuccessTrend(3))
+                                    {
+                                        @if (result)
+                                        {
+                                            <span>👍</span>
+                                        }
+                                        else
+                                        {
+                                            <span>👎</span>
+                                        }
+                                    }
+
+                                </td>
+
+                                <td class="has-text-centered">
+                                    @if (player.Alive)
+                                    {
+                                        @if (player.SelectedCard == null)
+                                        {
+                                            <WaitingAnimation />
+                                        }
+                                        else
+                                        {
+                                            <span>✔️</span>
+                                        }
+                                    }
+                                </td>
+                            }
+                            else if (Game.State == GameState.Ended)
+                            {
+                                <td>
+                                    @if (player.Winner)
+                                    {
+                                        <span class="text-3xl">🏆</span>
+                                    }
+                                    else if (Game.Winners.Count == 0)
+                                    {
+                                        <i class="text-sm">No winner&hellip;</i>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>
+</div>

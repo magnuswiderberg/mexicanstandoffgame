@@ -1,0 +1,16 @@
+﻿/*
+    NOTE: Best opened in VS Code
+    VS 2022 can't handle @apply
+*/
+
+@import "tailwindcss";
+
+@theme {
+    --major-text-fg: var(--color-amber-700);
+}
+
+@import "./basics.css";
+@import "./animations.css";
+@import "./characters.css";
+@import "./cards.css";
+@import "./game-state.css";
