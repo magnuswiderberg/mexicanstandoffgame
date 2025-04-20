@@ -1,10 +1,10 @@
 ﻿@using Game.Logic
+@using Microsoft.AspNetCore.SignalR.Client
 
 @code
 {
     [Parameter] public Game Game { get; set; } = null!;
-    [Parameter] public Action PlayerCountChangedAction { get; set; } = null!;
-    [Parameter] public Action GameStateChangedAction { get; set; } = null!;
+    [Parameter] public HubConnection HubConnection { get; set; } = null!;
 }
 
 <div class="mx-auto flex max-w-2xl flex-col items-center">
@@ -16,11 +16,11 @@
         <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">&#128209;</span>
     </div>
 
-    <div class="mt-10 flex flex-col gap-3">
+    <div class="mt-10 gap-3 flex flex-col">
         @foreach (var player in Game.Players)
         {
-            <div class="appear flex items-center gap-5">
-                <GameCharacter Id="@player.Character.Id" />
+            <div class="appear gap-5 flex items-center">
+                <GameCharacter Player="@player" />
                 @player.Name
             </div>
         }
@@ -33,7 +33,7 @@
     }
     else
     {
-        <button class="button large mt-8 cursor-pointer" @onclick="StartGame">Start game</button>
+        <button class="button large mt-8 cursor-pointer" @onclick="StartGameAsync">Start game</button>
     }
 
     <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>

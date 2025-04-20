@@ -1,23 +1,22 @@
 ﻿window.playSound = (elementId) => {
     try {
-        console.debug("playing sound", elementId)
-        //new Audio("sounds/" + type + ".mp3").play();
-        document.getElementById(elementId).play();
+        console.log("playing", elementId)
+        const audioElement = document.getElementById(elementId);
+
+        // Create a new Audio object to support concurrent sounds
+        const audio = new Audio(audioElement.src);
+        audio.oncanplaythrough = () => {
+            audio.play();
+        };
     } catch (e) {
-        console.exception(e);
+        console.error(e);
     }
 };
 
 window.copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(function () {
-        console.log('Async: Copying to clipboard was successful!');
+        console.log(`Copied play URL: ${text}`);
     }, function (err) {
-        console.error('Async: Could not copy text: ', err);
+        console.error(`Unable to copy play URL: ${text}`, err);
     });
-//    const el = document.createElement("textarea");
-//    el.value = str;
-//    document.body.appendChild(el);
-//    el.select();
-//    document.execCommand("copy");
-//    document.body.removeChild(el);
 };

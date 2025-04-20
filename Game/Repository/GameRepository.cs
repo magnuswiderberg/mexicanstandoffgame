@@ -1,5 +1,6 @@
 ﻿using Game.Model;
 using Microsoft.Extensions.Caching.Memory;
+using Shared.GameEvents;
 
 namespace Game.Repository;
 
@@ -9,21 +10,21 @@ public class GameRepository : IDisposable
 
     public const string DeveloperGameId = "dev";
 
-    public Logic.Game CreateGame(Rules? rules = null)
+    public Logic.Game CreateGame(IGameEvents gameEvents, Rules? rules = null)
     {
         var gameId = UniqueIdentifier.Create(id => _currentGames.TryGetValue(id, out _));
         var newGame = _currentGames.GetOrCreate(gameId.Id, entry =>
         {
             entry.SlidingExpiration = TimeSpan.FromHours(6);
 
-            var game = new Logic.Game(gameId.Id, rules);
+            var game = new Logic.Game(gameId.Id, gameEvents, rules);
             return game;
         });
 
         return newGame!;
     }
 
-    public Logic.Game GetOrCreateDevelopmentGame(ForceRecreate? forceRecreate = null)
+    public async Task<Logic.Game> GetOrCreateDevelopmentGameAsync(IGameEvents gameEvents, ForceRecreate? forceRecreate = null)
     {
         var game = GetGame(DeveloperGameId);
 
@@ -35,14 +36,16 @@ public class GameRepository : IDisposable
 
         if (game == null)
         {
-            game = new Logic.Game(DeveloperGameId, new Rules
+            game = new Logic.Game(DeveloperGameId, gameEvents, new Rules
             {
+                CoinsToWin = 2,
                 MinimumPlayerCount = 1,
                 MaximumPlayerCount = 4,
                 ShotsToDie = 1,
                 SelectCardTimeoutSeconds = 0,
                 ChestsPerPlayerCount = new Dictionary<int, int>
                 {
+                    { 0, 0 },
                     { 1, 1 },
                     { 2, 2 },
                     { 3, 2 },
@@ -59,7 +62,7 @@ public class GameRepository : IDisposable
         {
             foreach (var player in game.Players.ToList())
             {
-                game.RemovePlayer(player);
+                await game.RemovePlayerAsync(player);
                 player.ResetCards();
             }
         }

@@ -1,6 +1,6 @@
 ﻿using Shared.Cards;
 
-namespace Game.Model;
+namespace Shared.Model;
 
 public enum RoundActionType
 {

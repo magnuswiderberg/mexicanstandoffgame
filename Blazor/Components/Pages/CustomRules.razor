@@ -3,16 +3,50 @@
 <div class="mx-auto flex max-w-2xl max-w-lg flex-col items-center">
     <h1>Mexican Standoff</h1>
     <h2>A Quick Mind Game</h2>
-    
+
     <div class="mt-10">
         <img src="img/signature-villans.jpg" class="max-w-[200px]" />
     </div>
-    
-    <div class="mt-12 rounded-lg bg-orange-200 p-12 italic shadow-lg">
-        <span class="emphasis">NOTE,</span>
-        this feature is not implement yet
-    </div>
-
-    <a href="/" class="button mt-8">&lArr; Back</a>
-
 </div>
+
+
+<EditForm Model="@_rules" OnValidSubmit="@CreateCustomizedGame">
+
+    <section class="mt-10 gap-10 mx-auto flex max-w-2xl flex-col items-center">
+
+        <table id="custom-rules">
+            <tr>
+                <td><label for="coins-to-win">Shots to die</label></td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.ShotsToDie" min="1" id="shots-to-die" />
+                </td>
+            </tr>
+            <tr>
+                <td><label for="coins-to-win">Coins to win</label></td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.CoinsToWin" min="1" id="coins-to-win" />
+                </td>
+            </tr>
+            <tr>
+                <td><label for="coins-to-win">Maximum bullets in gun</label></td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.MaxBullets" min="1" id="maximum-bullets" />
+                </td>
+            </tr>
+            @* <tr>
+                <td><label for="timeout-seconds">Maximum seconds to<br/>select card (0 to disable)</label></td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.SelectCardTimeoutSeconds" min="0" id="timeout-seconds" />
+                </td>
+            </tr> *@
+            <tr>
+                <td><label for="chest-count-1">Maximum players on chest to get coin</label></td>
+                <td><InputNumber @bind-Value="@_maxOnChest" min="1" max="@(MaxPlayers+1)" id="chest-count-1" /></td>
+            </tr>
+        </table>
+
+        <button type="submit" class="button is-large is-rounded">Create game!</button>
+        <a href="/" class="button neutral is-rounded">&lt; Back</a>
+
+    </section>
+</EditForm>

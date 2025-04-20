@@ -1,5 +1,6 @@
 ﻿using Game.Model;
 using Shared.Cards;
+using Shared.Model;
 
 namespace Game.Logic;
 
@@ -22,31 +23,42 @@ public partial class Game
         return playable;
     }
 
-    private void PlayerCardChanged(object? sender, EventArgs e)
+    private async Task PlayerCardChangedAsync(Player player)
     {
         if (State != GameState.Playing) return;
 
-        if (sender is Player)
-        {
+        await gameEvents.CardPlayedAsync(Id, player.Id, player.SelectedCard);
+
+        bool roundCompleted = false;
 #pragma warning disable CA2002
-            lock (this)
+        lock (this)
+        {
+            try
             {
-                try
+                Players.ToList().ForEach(x => x.SetLocked(true));
+                if (AlivePlayers.All(x => x.SelectedCard != null))
                 {
-                    Players.ToList().ForEach(x => x.SetLocked(true));
-                    if (AlivePlayers.All(x => x.SelectedCard != null))
-                    {
-                        // All players have selected their card; resolve
-                        CompleteRound();
-                        MaybeEndGame();
-                    }
-                }
-                finally
-                {
-                    Players.ToList().ForEach(x => x.SetLocked(false));
+                    // All players have selected their card; resolve
+                    CompleteRound();
+                    roundCompleted = true;
                 }
             }
+            finally
+            {
+                Players.ToList().ForEach(x => x.SetLocked(false));
+            }
+        }
 #pragma warning restore CA2002
+
+        if (roundCompleted)
+        {
+            await gameEvents.RoundResultsCompletedAsync(Id);
+            foreach (var p in Players)
+            {
+                p.NewRound();
+            }
+            await gameEvents.NewRoundAsync(Id);
+            await MaybeEndGameAsync();
         }
     }
 
@@ -54,19 +66,19 @@ public partial class Game
 
     private void CompleteRound()
     {
-        var diffInitializer = AlivePlayers.ToDictionary(p => p, _ => 0);
-        var coinsDiff = new Dictionary<Player, int>(diffInitializer);
-        var shotsDiff = new Dictionary<Player, int>();
-        var shotBy = new Dictionary<Player, List<Player>>(AlivePlayers.ToDictionary(p => p, _ => new List<Player>()));
-        var bulletsDiff = new Dictionary<Player, int>(diffInitializer);
-        var result = new Dictionary<Player, bool>();
+        var diffInitializer = AlivePlayers.ToDictionary(p => p.Id, _ => 0);
+        var coinsDiff = new Dictionary<string, int>(diffInitializer);
+        var shotsDiff = new Dictionary<string, int>();
+        var shotBy = new Dictionary<string, List<Player>>(AlivePlayers.ToDictionary(p => p.Id, _ => new List<Player>()));
+        var bulletsDiff = new Dictionary<string, int>(diffInitializer);
+        var result = new Dictionary<string, bool>();
         var actions = new List<RoundAction>();
 
         // Dodge
         foreach (var player in AlivePlayers.Where(player => player.SelectedCard?.Type == CardType.Dodge).ToList())
         {
-            result[player] = true;
-            actions.Add(new RoundAction(RoundActionType.Dodge, player.Character, result[player]));
+            result[player.Id] = true;
+            actions.Add(new RoundAction(RoundActionType.Dodge, player.Character, result[player.Id]));
         }
 
         // Attacks
@@ -81,84 +93,117 @@ public partial class Game
             // Can't attack dodging player
             if (attackedPlayer.SelectedCard?.Type != CardType.Dodge)
             {
-                if (!shotsDiff.TryAdd(attackedPlayer, 1)) shotsDiff[attackedPlayer]++;
-                result[player] = true;
-                shotBy[attackedPlayer].Add(player);
+                if (!shotsDiff.TryAdd(attackedPlayer.Id, 1)) shotsDiff[attackedPlayer.Id]++;
+                result[player.Id] = true;
+                shotBy[attackedPlayer.Id].Add(player);
+                // TODO: Exception on "shotBy[attackedPlayer].Add(player);"
+                /*
+                 The given key 'mrrandom [$0|S=1|B=0|(-)]' was not present in the dictionary.
+                   
+                      at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+                   
+                      at Game.Logic.Game.CompleteRound() in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.Logic.cs:line 98
+                   
+                      at Game.Logic.Game.PlayerCardChangedAsync(Player player) in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.Logic.cs:line 42
+                   
+                      at Game.Logic.Game.<>c__DisplayClass28_0.<<AddPlayerAsync>b__0>d.MoveNext() in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.cs:line 48
+                   
+                   --- End of stack trace from previous location ---
+                   
+                      at Game.Model.Player.SetSelectedCardAsync(Card card) in D:\privat\github\mexicanstandoffgame\Game\Model\Player.cs:line 58
+                   
+                      at Blazor.Components.Pages.Play.CardClicked(Card card)
+                   
+                      at Microsoft.AspNetCore.Components.ComponentBase.CallStateHasChangedOnAsyncCompletion(Task task)
+                 */
             }
             else
             {
-                result[player] = false;
+                result[player.Id] = false;
             }
-            bulletsDiff[player] = -1;
-            actions.Add(new RoundAction(RoundActionType.Attack, player.Character, result[player]) { Target = attackedPlayer.Character });
+            bulletsDiff[player.Id] = -1;
+            actions.Add(new RoundAction(RoundActionType.Attack, player.Character, result[player.Id]) { Target = attackedPlayer.Character });
         }
 
         // Loads
         foreach (var player in AlivePlayers.Where(player => player.SelectedCard?.Type == CardType.Load).ToList())
         {
-            if (shotsDiff.ContainsKey(player))
+            if (shotsDiff.ContainsKey(player.Id))
             {
-                result[player] = false;
+                result[player.Id] = false;
             }
             else
             {
                 if (player.Bullets < Rules.MaxBullets)
                 {
-                    bulletsDiff[player]++;
-                    result[player] = true;
+                    bulletsDiff[player.Id]++;
+                    result[player.Id] = true;
                 }
             }
-            actions.Add(new RoundAction(RoundActionType.Load, player.Character, result[player]));
+            actions.Add(new RoundAction(RoundActionType.Load, player.Character, result[player.Id]));
         }
 
         // Chests
         foreach (var player in AlivePlayers.Where(x => x.SelectedCard?.Type == CardType.Chest).ToList())
         {
-            if (shotsDiff.ContainsKey(player))
+            if (shotsDiff.ContainsKey(player.Id))
             {
-                result[player] = false;
+                result[player.Id] = false;
             }
             else
             {
                 var othersOnChest = AlivePlayers
                     .Where(p => p.Id != player.Id)
                     .Where(p => p.SelectedCard?.Type == CardType.Chest)
-                    .Where(p => !shotsDiff.ContainsKey(p))
+                    .Where(p => !shotsDiff.ContainsKey(p.Id))
                     .ToList();
                 var maxOnChest = Rules.ChestsPerPlayerCount.ContainsKey(AlivePlayers.Count)
                     ? Rules.ChestsPerPlayerCount[AlivePlayers.Count]
                     : 1;
-                result[player] = othersOnChest.Count <= maxOnChest - 1; // TODO: unit test
-                if (result[player])
+                result[player.Id] = othersOnChest.Count <= maxOnChest - 1; // TODO: unit test
+                if (result[player.Id])
                 {
-                    coinsDiff[player]++;
+                    coinsDiff[player.Id]++;
                 }
             }
-            actions.Add(new RoundAction(RoundActionType.Chest, player.Character, result[player]));
+            actions.Add(new RoundAction(RoundActionType.Chest, player.Character, result[player.Id]));
         }
 
         foreach (var action in actions)
         {
-            if (shotsDiff.Keys.Select(x => x.Character).Any(character => character.Id == action.Source.Id))
+            if (shotsDiff.Keys
+                .Select(playerId => Players.First(p => p.Id == playerId))
+                .Select(player => player.Character)
+                .Any(character => character.Id == action.Source.Id))
             {
                 action.Shot = true;
             }
         }
 
         // Apply
-        foreach (var entry in coinsDiff) entry.Key.Coins += entry.Value;
-        foreach (var entry in shotsDiff) entry.Key.Shots += entry.Value;
-        foreach (var (player, bullets) in bulletsDiff)
+        foreach (var entry in coinsDiff)
         {
+            var player = Players.First(x => x.Id == entry.Key);
+            player.Coins += entry.Value;
+        }
+
+        foreach (var entry in shotsDiff)
+        {
+            var player = Players.First(x => x.Id == entry.Key);
+            player.Shots += entry.Value;
+        }
+        foreach (var (playerId, bullets) in bulletsDiff)
+        {
+            var player = Players.First(x => x.Id == playerId);
             player.Bullets += bullets;
             if (player.Shots >= Rules.ShotsToDie) player.SetDead();
         }
-        foreach (var entry in bulletsDiff)
+        foreach (var (playerId, bullets) in bulletsDiff)
         {
-            var player = entry.Key;
+            var player = Players.First(x => x.Id == playerId);
             if (!player.Alive)
             {
-                var aliveShooters = shotBy[player].Where(x => x.Alive).ToList();
+                var aliveShooters = shotBy[player.Id].Where(x => x.Alive).ToList();
                 if (aliveShooters.Count != 0)
                 {
                     foreach (var shooter in aliveShooters)
@@ -169,17 +214,21 @@ public partial class Game
                 }
             }
         }
-        foreach (var entry in result) entry.Key.SetResult(Rounds, entry.Value);
 
-        actions.Sort((a, b) => a.Type - b.Type);
+        foreach (var entry in result)
+        {
+            var player = Players.First(x => x.Id == entry.Key);
+            player.SetResult(Rounds, entry.Value);
+        }
+
+        actions = actions
+            .OrderBy(a => a.Type)
+            .ThenBy(a => a.Source.Id)
+            .ToList();
         LastRound.Actions = actions;
-
-        // Event
-        RoundResultsCompleted?.Invoke(this, EventArgs.Empty);
-        //Rounds++;
     }
 
-    private void MaybeEndGame()
+    private async Task MaybeEndGameAsync()
     {
         var winners = new List<Player>();
 
@@ -223,20 +272,156 @@ public partial class Game
         if (winners.Count != 0)
         {
             ((List<Player>)Winners).AddRange(winners);
-            foreach (var player in Winners) player.SetWinner();
-            End();
+            foreach (var player in Winners.ToList()) player.SetWinner();
+            await EndAsync();
         }
 
         // All dead?
         if (!AlivePlayers.Any())
         {
-            End();
+            await EndAsync();
         }
     }
 
-    private void End()
+    private async Task EndAsync()
     {
         State = GameState.Ended;
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        await gameEvents.GameStateChangedAsync(Id, State);
+    }
+
+    public List<AggregatedRoundAction> CreateLastRoundAggregate()
+    {
+        var aggregatedRoundResult = new List<AggregatedRoundAction>();
+
+        var unsuccessfulAttackers = LastRound.Actions.Where(a => a is { Type: RoundActionType.Attack, Success: false });
+        foreach (var action in unsuccessfulAttackers)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == action.Target?.Id);
+            if (targetPlayer == null) continue;
+            var aggregatedAction = aggregatedRoundResult.FirstOrDefault(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+            if (aggregatedAction == null)
+            {
+                aggregatedAction = new AggregatedRoundAction
+                {
+                    TargetPlayers = [targetPlayer],
+                    Type = RoundActionType.Dodge,
+                    Successful = false,
+                    Attackers = new()
+                };
+                aggregatedRoundResult.Add(aggregatedAction);
+            }
+            var sourcePlayer = Players.FirstOrDefault(p => p.Character.Id == action.Source.Id);
+            if (sourcePlayer == null) continue;
+            aggregatedAction.Attackers!.Add(sourcePlayer);
+        }
+
+        var successfulAttackers = LastRound.Actions.Where(a => a is { Type: RoundActionType.Attack, Success: true });
+        foreach (var action in successfulAttackers)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == action.Target?.Id);
+            if (targetPlayer == null) continue;
+            var sourcePlayer = Players.FirstOrDefault(p => p.Character.Id == action.Source.Id);
+            if (sourcePlayer == null) continue;
+            var aggregatedAction = aggregatedRoundResult.FirstOrDefault(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+            if (aggregatedAction == null)
+            {
+                aggregatedAction = new AggregatedRoundAction
+                {
+                    TargetPlayers = [targetPlayer],
+                    Type = RoundActionType.Attack,
+                    Successful = true,
+                    Attackers = new()
+                };
+                aggregatedRoundResult.Add(aggregatedAction);
+            }
+            aggregatedAction.Attackers!.Add(sourcePlayer);
+        }
+
+        var dodgersWithoutShooter = LastRound.Actions.Where(a => a is { Type: RoundActionType.Dodge });
+        var attackerActions = aggregatedRoundResult.ToList();
+        var dodgers = new List<Player>();
+        foreach (var dodger in dodgersWithoutShooter)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == dodger.Source.Id);
+            if (targetPlayer == null) continue;
+            var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+            if (hasAttacker) continue;
+            dodgers.Add(targetPlayer);
+        }
+        if (dodgers.Count != 0)
+        {
+            aggregatedRoundResult.Add(new AggregatedRoundAction
+            {
+                TargetPlayers = dodgers,
+                Type = RoundActionType.Dodge,
+                Successful = true
+            });
+        }
+
+        var successfulLoaders = LastRound.Actions.Where(a => a is { Type: RoundActionType.Load, Success: true });
+        var loaders = new List<Player>();
+        foreach (var loader in successfulLoaders)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            if (targetPlayer == null) continue;
+            loaders.Add(targetPlayer);
+        }
+        if (loaders.Count != 0)
+        {
+            aggregatedRoundResult.Add(new AggregatedRoundAction
+            {
+                TargetPlayers = loaders,
+                Type = RoundActionType.Load,
+                Successful = true
+            });
+        }
+
+        var successfulChesters = LastRound.Actions.Where(a => a is { Type: RoundActionType.Chest, Success: true });
+        var chesters = new List<Player>();
+        foreach (var loader in successfulChesters)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            if (targetPlayer == null) continue;
+            chesters.Add(targetPlayer);
+        }
+        if (chesters.Count != 0)
+        {
+            aggregatedRoundResult.Add(new AggregatedRoundAction
+            {
+                TargetPlayers = chesters,
+                Type = RoundActionType.Chest,
+                Successful = true
+            });
+        }
+
+        var unsuccessfulChesters = LastRound.Actions.Where(a => a is { Type: RoundActionType.Chest, Success: false, Shot: false });
+        var unchesters = new List<Player>();
+        foreach (var loader in unsuccessfulChesters)
+        {
+            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            if (targetPlayer == null) continue;
+            unchesters.Add(targetPlayer);
+        }
+        if (unchesters.Count != 0)
+        {
+            aggregatedRoundResult.Add(new AggregatedRoundAction
+            {
+                TargetPlayers = unchesters,
+                Type = RoundActionType.Chest,
+                Successful = false
+            });
+        }
+
+        if (aggregatedRoundResult.Count == 0)
+        {
+            aggregatedRoundResult.Add(new AggregatedRoundAction
+            {
+                TargetPlayers = [new Player(Guid.NewGuid().ToString(), Character.Get(1)!) { Name = "Unknown error..." }],
+                Type = RoundActionType.Dodge,
+                Successful = false
+            });
+        }
+
+        return aggregatedRoundResult;
     }
 }

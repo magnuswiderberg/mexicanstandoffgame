@@ -12,6 +12,8 @@
 	</Target>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.ResponseCompression" Version="2.3.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.4" />
 		<PackageReference Include="QRCoder" Version="1.6.0" />
 	</ItemGroup>
 

@@ -18,7 +18,7 @@
 }
 
 .character .size-medium {
-    background-size: 2.5rem;
+    background-size: 2.25rem;
     width: 2.75rem;
     height: 2.75rem;
 }
@@ -35,45 +35,36 @@
     height: 5rem;
 }
 
-/* TODO: Find better colors */
 .character .character-1 {
-    --bg-color: #0082c8;
+    --bg-color: #E63946;
 }
 
 .character .character-2 {
-    --bg-color: #911eb4;
+    --bg-color: #F1FAEE;
 }
 
 .character .character-3 {
-    --bg-color: #ffd8b1;
+    --bg-color: #A8DADC;
 }
 
 .character .character-4 {
-    --bg-color: #46f0f0;
+    --bg-color: #457B9D;
 }
 
 .character .character-5 {
-    --bg-color: #f58231;
+    --bg-color: #1D3557;
 }
 
 .character .character-6 {
-    --bg-color: #808000;
+    --bg-color: #F4A261;
 }
 
 .character .character-7 {
-    --bg-color: #808080;
+    --bg-color: #E9C46A;
 }
 
 .character .character-8 {
-    --bg-color: #FFFFFF;
-}
-
-.character .shot {
-    /* TODO */
-    box-shadow: -0.3rem -0.15rem 2rem var(--color-red-900);
-    Xbackground-size: 2rem;
-    Xwidth: 2.25rem;
-    Xheight: 2.25rem;
+    --bg-color: #2A9D8F;
 }
 
 .character .name-under {

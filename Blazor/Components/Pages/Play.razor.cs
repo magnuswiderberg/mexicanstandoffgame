@@ -1,102 +1,180 @@
-﻿using Game.Model;
+﻿using System.Diagnostics.CodeAnalysis;
+using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Game.Repository;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Shared.Cards;
 using Microsoft.JSInterop;
+using Microsoft.AspNetCore.SignalR.Client;
+using Shared.GameEvents;
+using Shared.Model;
 
 namespace Blazor.Components.Pages;
 
-public partial class Play
+public partial class Play : IAsyncDisposable
 {
     [Inject] public GameRepository GameRepository { get; set; } = null!;
     [Inject] public ProtectedLocalStorage ProtectedLocalStorage { get; set; } = null!;
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public NavigationManager NavigationManager { get; set; } = null!;
 
     private Game.Logic.Game? _game;
     private Player? _player;
-    private Card? _selectedCard;
+    private string? _playerId;
+    private string? _playerName;
+    private string? _playerNameInfo;
+
     private bool _gameIsFull;
-    private bool _waitingForAnimation;
-    private string? _appearClassName;
+    private bool _waitingForMonitor;
+    //private string? _appearClassName;
+    private bool _gameHasStartedAlready;
     private string? _rejoinStatus;
 
-    private Card? SelectedCard
-    {
-        get => _selectedCard;
-        set
-        {
-            // We want user to see what happens
-            InvokeAsync(() => Task.Delay(TimeSpan.FromMilliseconds(300)));
-            _selectedCard = value;
-            _player?.SetSelectedCard(_selectedCard);
-        }
-    }
+    private bool _initializing = true;
+    private HubConnection? _hubConnection;
+    private bool _lastRevealDone;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _game = GameRepository.GetGame(GameId);
         if (_game == null) return;
 
-        _game.PlayerJoined += GameStateChanged;
-        _game.PlayerLeft += GameStateChanged;
-        _game.GameStateChanged += GameStateChanged;
-        _game.RoundResultsCompleted += RoundResultsCompleted;
-        _game.RoundCompleted += NewRound;
-
+        _waitingForMonitor = false;
+        await InitializeHubAsync();
     }
+
+    [SuppressMessage("ReSharper", "UnusedParameter.Local")]
+    private async Task InitializeHubAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri(IGameEvents.HubUrl))
+            .Build();
+
+        _hubConnection.On<string>(IGameEvents.EventNames.PlayerJoined, async playerId =>
+        {
+            await GameStateChangedAsync();
+        });
+        _hubConnection.On<string>(IGameEvents.EventNames.PlayerLeft, async playerId =>
+        {
+            await GameStateChangedAsync();
+        });
+        _hubConnection.On<GameState>(IGameEvents.EventNames.GameStateChanged, async newState =>
+        {
+            await GameStateChangedAsync();
+        });
+        _hubConnection.On<string, Card?>(IGameEvents.EventNames.CardPlayed, async (playerId, card) =>
+        {
+            if (playerId == _player?.Id)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+        _hubConnection.On(IGameEvents.EventNames.RoundResultsCompleted, async () =>
+        {
+            _waitingForMonitor = true;
+            await InvokeAsync(StateHasChanged);
+        });
+        _hubConnection.On(IGameEvents.EventNames.GameRestarted, async () =>
+        {
+            _player = null;
+            await InvokeAsync(StateHasChanged);
+
+        });
+        _hubConnection.On(IGameEvents.EventNames.RoundCompleted, async () =>
+        {
+            //_waitingForMonitor = false;
+            if (_player == null) return;
+            //await _player.SetSelectedCardAsync(null);
+            _player.ResetCards();
+            // TODO StartTimer();
+            //await SetAppearClassNameDelayed();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async (gameStateWhenRevealed) =>
+        {
+            // TODO: _lastRevealDone is set too early
+            if (gameStateWhenRevealed == GameState.Ended) _lastRevealDone = true;
+            _waitingForMonitor = false;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+        await _hubConnection.InvokeAsync(IGameEvents.JoinGameMethod, _game!.Id);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private const string PlayerIdKey = "player_id";
+    private const string PlayerNameKey = "player_name";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        if (_game == null) return;
 
-        var key = CreatePlayerIdKey();
-        string? playerId = null;
-        var playerIdFromLocalStorage = await ProtectedLocalStorage.GetAsync<string>(key);
-        if (playerIdFromLocalStorage.Success) playerId = playerIdFromLocalStorage.Value;
-        if (string.IsNullOrWhiteSpace(playerId))
+        var playerIdFromLocalStorage = await ProtectedLocalStorage.GetAsync<string>(PlayerIdKey);
+        if (playerIdFromLocalStorage.Success) _playerId = playerIdFromLocalStorage.Value;
+        if (string.IsNullOrWhiteSpace(_playerId))
         {
-            playerId = Guid.NewGuid().ToString();
-            await ProtectedLocalStorage.SetAsync(key, playerId);
-            await JsRuntime.InvokeVoidAsync("localStorage.setItem", key + "_plain", playerId);
+            _playerId = Guid.NewGuid().ToString();
+            await ProtectedLocalStorage.SetAsync(PlayerIdKey, _playerId);
+            await JsRuntime.InvokeVoidAsync("localStorage.setItem", PlayerIdKey + "_plain", _playerId); // TODO: Remove
         }
 
-        _player = _game.Players.FirstOrDefault(x => x.Id == playerId);
+        var playerNameFromLocalStorage = await ProtectedLocalStorage.GetAsync<string>(PlayerNameKey);
+        if (playerNameFromLocalStorage.Success) _playerName = playerNameFromLocalStorage.Value;
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _playerName = SuggestedNicknames[Random.Shared.Next(SuggestedNicknames.Length)];
+        }
+
+        _initializing = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task JoinGameAsync()
+    {
+        if (_game == null || _playerId == null) return;
+
+        _player = _game.Players.FirstOrDefault(x => x.Id == _playerId);
         if (_player == null)
         {
             var character = Character.Random(_game.AllCharacters());
-            _player = new Player(playerId, character);
-            AddPlayer();
+            _player = new Player(_playerId, character);
+            await AddPlayerAsync();
         }
-        StateHasChanged(); // Note: needed because razor page can think _player is null otherwise
+
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void RoundResultsCompleted(object? sender, EventArgs e)
-    {
-        _waitingForAnimation = true;
-    }
 
-    private void NewRound(object? sender, EventArgs e)
-    {
-        if (_player == null) return;
-        SelectedCard = null;
-        _waitingForAnimation = false;
-        _player.ResetCards();
-        // TODO InvokeAsync(() => JsRuntime.InvokeVoidAsync("resetCards")).Wait();
-        // TODO StartTimer();
-        InvokeAsync(SetAppearClassNameDelayed);
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void AddPlayer()
+    private async Task AddPlayerAsync()
     {
         if (_game == null || _player == null) return;
         if (_game.Players.Any(p => p.Id == _player.Id)) return;
+
+        if (_game.State != GameState.Created)
+        {
+            _gameHasStartedAlready = true;
+            return;
+        }
+
+        _playerNameInfo = null;
+        if (!string.IsNullOrWhiteSpace(_playerName))
+        {
+            if (_game.Players.Any(p => string.Equals(p.Name, _playerName, StringComparison.OrdinalIgnoreCase)))
+            {
+                _playerNameInfo = "That nickname is taken.";
+                return;
+            }
+            if (_playerName.Length > MaxPlayerNameLength) _playerName = _playerName[..MaxPlayerNameLength];
+            _player.Name = _playerName;
+            await ProtectedLocalStorage.SetAsync(PlayerNameKey, _playerName);
+        }
+
         try
         {
-            _game.AddPlayer(_player);
-            Console.WriteLine($"Added player {_player.Id}, {_player.Character.Name}");
+            await _game.AddPlayerAsync(_player);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -104,70 +182,56 @@ public partial class Play
         }
     }
 
-    private void GameStateChanged(object? sender, EventArgs e)
+    private async Task GameStateChangedAsync()
     {
         if (_game == null || _player == null) return;
-        // TODO: needed, no? AddPlayer(); // Re-add player if state is lost somehow
         if (_game.State == GameState.Created)
         {
-            AddPlayer();
+            // TODO: Should not do this auto, right?
+            //await AddPlayerAsync();
         }
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
-    private string CreatePlayerIdKey()
-    {
-        return $"player_id";
-        //return $"player_id_{_game?.Id}";
-    }
-
-    private void Quit()
+    private async Task Quit()
     {
         if (_game == null || _player == null) return;
 
-        _game.RemovePlayer(_player);
-        _game.PlayerJoined -= GameStateChanged;
-        _game.PlayerLeft -= GameStateChanged;
-        // Can't be done at this time: await ProtectedLocalStorage.DeleteAsync(CreatePlayerIdKey());
+        await _game.RemovePlayerAsync(_player);
     }
 
-    //public void Dispose()
-    //{
-    //    Console.WriteLine("Play dispose()");
-    //    if (_game == null) return;
-    //    InvokeAsync(QuitAsync);
-    //}
-
-    private static bool IsSelected(Card card, Card? selectedCard)
+    private bool IsSelected(Card card)
     {
-        if (selectedCard == null) return false;
-        if (selectedCard is AttackCard selectedAttackCard && card is AttackCard attackCard)
+        if (_player == null) return false;
+        if (_player.SelectedCard == null) return false;
+        if (_player.SelectedCard is AttackCard selectedAttackCard && card is AttackCard attackCard)
         {
             return selectedAttackCard.Target.Id == attackCard.Target.Id;
         }
-        return card.Type == selectedCard.Type;
+        return card.Type == _player.SelectedCard.Type;
     }
 
-    private async Task SetAppearClassNameDelayed()
-    {
-        _appearClassName = null;
-        StateHasChanged();
-        await Task.Delay(300);
-        _appearClassName = "appear";
-        StateHasChanged();
-    }
+    //private async Task SetAppearClassNameDelayed()
+    //{
+    //    _appearClassName = null;
+    //    await InvokeAsync(StateHasChanged);
+    //    await Task.Delay(0);
+    //    _appearClassName = "appear";
+    //    await InvokeAsync(StateHasChanged);
+    //}
 
-    private void CardClicked(Card? card)
+    private async Task CardClicked(Card? card)
     {
-        if (_waitingForAnimation) return;
+        if (_waitingForMonitor) return;
+        if (_player == null) return;
 
-        SelectedCard = card;
+        await _player.SetSelectedCardAsync(card);
     }
 
     private async Task TryRejoin()
     {
         _rejoinStatus = null;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
         await Task.Delay(200);
 
         if (_game?.Id == GameRepository.DeveloperGameId)
@@ -185,13 +249,42 @@ public partial class Play
         }
         else
         {
-            AddPlayer();
+            await AddPlayerAsync();
             if (_gameIsFull)
             {
                 _rejoinStatus = "The game is full, so can't rejoin";
             }
         }
 
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null) await _hubConnection.DisposeAsync();
+    }
+
+    private const int MaxPlayerNameLength = 16;
+
+    private static readonly string[] SuggestedNicknames =
+    [
+        "Frank Wolf",
+        "Jefe Escorpion",
+        "Bandito Diablo",
+        "Rosa Ramirez",
+        "El Lobo Gris",
+        "Maria Delgado",
+        "Tomas Vasquez",
+        "Lucky Santiago",
+        "Coyote Jim",
+        "Dolores Mendoza",
+        "Angel Herrera",
+        "Pancho Reyes",
+        "Salvatore Cruz",
+        "Juanita Morales",
+        "Esteban Ortega",
+        "Rico Morales",
+        "Catalina Torres",
+        "Vicente Alvarez"
+    ];
 }

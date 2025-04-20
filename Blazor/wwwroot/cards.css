@@ -1,38 +1,29 @@
 .selectable-cards {
-    /* display: flex;
-    flex-wrap: wrap;
-    justify-content: center; */
     @apply flex flex-wrap justify-center;
 }
 
 .selectable-card {
-    /*display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;*/
-    text-align: center;
-    width: 7rem;
-    height: 10rem;
-    padding: 0.25em;
-    margin: 0.2rem;
-    border-radius: 0.25rem;
-    text-align: center;
-    color: black;
-    background-color: #fff;
-    border: 1px solid var(--major-text-fg);
-    cursor: pointer;
-    touch-action: none;
-    transition: all 0.8s;
-    @apply shadow-md shadow-amber-900/40;
+    @apply text-black bg-white shadow-md shadow-amber-900/40;
+    @apply flex flex-col gap-3 justify-center items-center;
+    @apply m-1 p-3;
+    @apply w-[8rem] h-[11rem];
+    @apply rounded-md border border-solid border-(--major-text-fg);
+    @apply cursor-pointer touch-none;
+    transition: all 0.3s;
 }
 
 .selectable-card.selected {
-    @apply bg-amber-100 text-amber-900;
+    @apply bg-amber-200 text-amber-900 font-bold;
 }
 
 .selectable-card .card-name {
-    margin: 1rem 0;
-    text-transform: uppercase;
+    @apply break-all uppercase;
+}
+.selectable-card .target {
+    @apply uppercase text-center;
+}
+.selectable-card .long-name {
+    @apply break-all;
 }
 
 .bullet {

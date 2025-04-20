@@ -1,4 +1,4 @@
-﻿namespace Game.Model;
+﻿namespace Shared.Model;
 
 public enum GameState
 {

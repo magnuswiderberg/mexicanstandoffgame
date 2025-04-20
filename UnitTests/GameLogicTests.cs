@@ -4,8 +4,12 @@ using Shared.Cards;
 using Shouldly;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using Moq;
+using Shared.GameEvents;
+using Shared.Model;
 
 #pragma warning disable CA2211
+#pragma warning disable CA2007
 
 namespace UnitTests;
 
@@ -17,24 +21,40 @@ public class GameLogicTests
     private readonly Player _player2 = new("2", Character.Get(2)!);
     private readonly Player _player3 = new("3", Character.Get(3)!);
 
+    private readonly Mock<IGameEvents> _gameEventsMock = new();
+
+    public GameLogicTests()
+    {
+        _gameEventsMock
+            .Setup(m => m.CardPlayedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Card?>()))
+            .Callback((string gameId, string playerId, Card? card) =>
+            {
+                var game = _gameRepository.GetGame(gameId);
+                if (game!.AlivePlayers.All(p => p.SelectedCard != null))
+                {
+                    game.SetRoundCompletedAsync().Wait();
+                }
+            });
+    }
+
 
     #region Helpers
 
-    private Game.Logic.Game CreateAndStartGameWithThreePlayers(Rules? rules = null)
+    private async Task<Game.Logic.Game> CreateAndStartGameWithThreePlayers(Rules? rules = null)
     {
-        var game = _gameRepository.CreateGame(rules);
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
-        game.AddPlayer(_player3);
-        game.Start();
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object, rules);
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
+        await game.AddPlayerAsync(_player3);
+        await game.StartAsync();
         return game;
     }
 
-    private void MakeRoundResolve(Game.Logic.Game game)
+    private async Task MakeRoundResolve(Game.Logic.Game game)
     {
         foreach (var player in game.Players)
         {
-            player.SetSelectedCard(Card.Dodge);
+            await player.SetSelectedCardAsync(Card.Dodge);
         }
     }
 
@@ -42,10 +62,10 @@ public class GameLogicTests
 
 
     [Fact]
-    public void A_Game_Can_Be_Created_And_Started_With_Three_Players()
+    public async Task A_Game_Can_Be_Created_And_Started_With_Three_Players()
     {
         const int playerCount = 3;
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         game.ShouldNotBeNull();
         game.State.ShouldBe(GameState.Playing, "The game should have started");
         game.Rounds.ShouldBe(1, "A game that has just started should be on round 1");
@@ -55,9 +75,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void An_Existing_Game_Can_Be_Retrieved()
+    public async Task An_Existing_Game_Can_Be_Retrieved()
     {
-        var createdGame = CreateAndStartGameWithThreePlayers();
+        var createdGame = await CreateAndStartGameWithThreePlayers();
         createdGame.ShouldNotBeNull();
 
         var game = _gameRepository.GetGame(createdGame.Id);
@@ -93,31 +113,31 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void A_Player_Cannot_Be_Added_To_A_Game_If_There_Are_No_Seats_Left()
+    public async Task A_Player_Cannot_Be_Added_To_A_Game_If_There_Are_No_Seats_Left()
     {
-        Should.Throw<ArgumentOutOfRangeException>(() =>
+        await Should.ThrowAsync<ArgumentOutOfRangeException>(async () =>
         {
-            CreateAndStartGameWithThreePlayers(new Rules { MaximumPlayerCount = 2 });
+            await CreateAndStartGameWithThreePlayers(new Rules { MaximumPlayerCount = 2 });
         });
     }
 
     [Fact]
-    public void With_Empty_Gun_Only_Certain_Cards_Are_Playable()
+    public async Task With_Empty_Gun_Only_Certain_Cards_Are_Playable()
     {
-        var game = _gameRepository.CreateGame();
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object);
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
 
         var playableCards = game.PlayableCards(_player1);
         playableCards.ShouldBeEquivalentTo(new[] { Card.Dodge, Card.Load, Card.Chest }.ToList());
     }
 
     [Fact]
-    public void With_Loaded_Gun_Attack_Cards_Are_Available()
+    public async Task With_Loaded_Gun_Attack_Cards_Are_Available()
     {
-        var game = _gameRepository.CreateGame();
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object);
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
 
         _player1.Bullets++;
 
@@ -126,17 +146,17 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void With_Fully_Loaded_Gun_Attack_Cards_Are_Available_For_Many_Opponents_But_Load_Is_Not()
+    public async Task With_Fully_Loaded_Gun_Attack_Cards_Are_Available_For_Many_Opponents_But_Load_Is_Not()
     {
         const int maxBullets = 6;
-        var game = _gameRepository.CreateGame(new Rules { MaxBullets = maxBullets });
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
-        game.AddPlayer(_player3);
-        game.AddPlayer(new Player("4", Character.Get(4)!));
-        game.AddPlayer(new Player("5", Character.Get(5)!));
-        game.AddPlayer(new Player("6", Character.Get(6)!));
-        game.AddPlayer(new Player("7", Character.Get(7)!));
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { MaxBullets = maxBullets });
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
+        await game.AddPlayerAsync(_player3);
+        await game.AddPlayerAsync(new Player("4", Character.Get(4)!));
+        await game.AddPlayerAsync(new Player("5", Character.Get(5)!));
+        await game.AddPlayerAsync(new Player("6", Character.Get(6)!));
+        await game.AddPlayerAsync(new Player("7", Character.Get(7)!));
 
         _player1.Bullets = maxBullets;
 
@@ -177,19 +197,19 @@ public class GameLogicTests
     //}
 
     [Fact]
-    public void Player_Gets_Coin_When_Alone_On_Chest()
+    public async Task Player_Gets_Coin_When_Alone_On_Chest()
     {
-        var game = _gameRepository.CreateGame();
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
-        game.AddPlayer(_player3);
-        game.Start();
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object);
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
+        await game.AddPlayerAsync(_player3);
+        await game.StartAsync();
 
         _player1.Coins.ShouldBe(0);
 
-        _player1.SetSelectedCard(Card.Chest);
-        _player2.SetSelectedCard(Card.Dodge);
-        _player3.SetSelectedCard(Card.Dodge); // This should resolve the round
+        await _player1.SetSelectedCardAsync(Card.Chest);
+        await _player2.SetSelectedCardAsync(Card.Dodge);
+        await _player3.SetSelectedCardAsync(Card.Dodge); // This should resolve the round
 
         _player1.Coins.ShouldBe(1);
     }
@@ -207,14 +227,14 @@ public class GameLogicTests
 
     [Theory]
     [MemberData(nameof(PlayerGetsCoinWhenSufficentlyFewAreOnTheChestData))]
-    public void Player_Gets_Coin_When_Sufficently_Few_Are_On_The_Chest(int players, int playersToGetCoin, Dictionary<int, int> setup)
+    public async Task Player_Gets_Coin_When_Sufficently_Few_Are_On_The_Chest(int players, int playersToGetCoin, Dictionary<int, int> setup)
     {
-        var game = _gameRepository.CreateGame(new Rules { ChestsPerPlayerCount = setup });
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { ChestsPerPlayerCount = setup });
         for (var i = 1; i <= players; i++)
         {
-            game.AddPlayer(new Player($"{i}", Character.Get(i)!));
+            await game.AddPlayerAsync(new Player($"{i}", Character.Get(i)!));
         }
-        game.Start();
+        await game.StartAsync();
 
         foreach (var gamePlayer in game.Players)
         {
@@ -223,11 +243,11 @@ public class GameLogicTests
 
         for (var i = 1; i <= playersToGetCoin; i++)
         {
-            game.Players.First(p => p.Id == $"{i}").SetSelectedCard(Card.Chest);
+            await game.Players.First(p => p.Id == $"{i}").SetSelectedCardAsync(Card.Chest);
         }
         for (var i = playersToGetCoin + 1; i <= players; i++)
         {
-            game.Players.First(p => p.Id == $"{i}").SetSelectedCard(Card.Dodge);
+            await game.Players.First(p => p.Id == $"{i}").SetSelectedCardAsync(Card.Dodge);
         }
         game.Rounds.ShouldBe(2, "The first round should have been completed");
 
@@ -238,27 +258,27 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Player_Gets_Coin_When_Other_Coin_Player_Gets_Shot()
+    public async Task Player_Gets_Coin_When_Other_Coin_Player_Gets_Shot()
     {
-        CreateAndStartGameWithThreePlayers();
+        await CreateAndStartGameWithThreePlayers();
         _player3.Bullets = 1;
 
         _player1.Coins.ShouldBe(0);
 
-        _player1.SetSelectedCard(Card.Chest);
-        _player2.SetSelectedCard(Card.Chest);
-        _player3.SetSelectedCard(new AttackCard(_player2.Character)); // This should resolve the round
+        await _player1.SetSelectedCardAsync(Card.Chest);
+        await _player2.SetSelectedCardAsync(Card.Chest);
+        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Character)); // This should resolve the round
 
         _player1.Coins.ShouldBe(1);
     }
 
     [Fact]
-    public void Player_With_Most_Coins_Wins()
+    public async Task Player_With_Most_Coins_Wins()
     {
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         _player1.Coins = game.Rules.CoinsToWin;
 
-        MakeRoundResolve(game);
+        await MakeRoundResolve(game);
 
         game.State.ShouldBe(GameState.Ended);
         game.Winners.Count.ShouldBe(1);
@@ -267,16 +287,16 @@ public class GameLogicTests
 
 
     [Fact]
-    public void One_Of_Players_With_Most_Coins_Wins_By_Fewest_Shots()
+    public async Task One_Of_Players_With_Most_Coins_Wins_By_Fewest_Shots()
     {
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         _player1.Coins = game.Rules.CoinsToWin;
         _player1.Bullets = 1;
         _player2.Coins = game.Rules.CoinsToWin;
         _player2.Shots = 1;
         _player2.Bullets = 1;
 
-        MakeRoundResolve(game);
+        await MakeRoundResolve(game);
 
         game.State.ShouldBe(GameState.Ended);
         game.Winners.Count.ShouldBe(1);
@@ -284,9 +304,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void One_Of_Players_With_Most_Coins_Wins_By_Most_Bullets()
+    public async Task One_Of_Players_With_Most_Coins_Wins_By_Most_Bullets()
     {
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         _player1.Coins = game.Rules.CoinsToWin;
         _player1.Shots = 1;
         _player1.Bullets = 1;
@@ -294,7 +314,7 @@ public class GameLogicTests
         _player2.Shots = 1;
         _player2.Bullets = 0;
 
-        MakeRoundResolve(game);
+        await MakeRoundResolve(game);
 
         game.State.ShouldBe(GameState.Ended);
         game.Winners.Count.ShouldBe(1);
@@ -302,9 +322,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Two_Players_With_Most_Coins_Win_If_Same_Shots_And_Bullets()
+    public async Task Two_Players_With_Most_Coins_Win_If_Same_Shots_And_Bullets()
     {
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         _player1.Coins = game.Rules.CoinsToWin;
         _player1.Shots = 1;
         _player1.Bullets = 1;
@@ -312,7 +332,7 @@ public class GameLogicTests
         _player2.Shots = 1;
         _player2.Bullets = 1;
 
-        MakeRoundResolve(game);
+        await MakeRoundResolve(game);
 
         game.State.ShouldBe(GameState.Ended);
         game.Winners.Count.ShouldBe(2);
@@ -320,13 +340,13 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Single_Player_Left_Wins()
+    public async Task Single_Player_Left_Wins()
     {
-        var game = CreateAndStartGameWithThreePlayers();
+        var game = await CreateAndStartGameWithThreePlayers();
         _player2.Shots = game.Rules.MaxBullets;
         _player3.Shots = game.Rules.MaxBullets;
 
-        MakeRoundResolve(game);
+        await MakeRoundResolve(game);
 
         game.State.ShouldBe(GameState.Ended);
         game.Winners.Count.ShouldBe(1);
@@ -334,27 +354,27 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Miss_Attack_When_Opponent_Dodges()
+    public async Task Miss_Attack_When_Opponent_Dodges()
     {
-        CreateAndStartGameWithThreePlayers();
+        await CreateAndStartGameWithThreePlayers();
         _player2.Bullets = 1;
 
-        _player1.SetSelectedCard(Card.Dodge);
-        _player2.SetSelectedCard(new AttackCard(_player1.Character));
-        _player3.SetSelectedCard(Card.Dodge);
+        await _player1.SetSelectedCardAsync(Card.Dodge);
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player3.SetSelectedCardAsync(Card.Dodge);
 
         _player1.Shots.ShouldBe(0);
     }
 
     [Fact]
-    public void Bullets_Decrease_When_Shooting()
+    public async Task Bullets_Decrease_When_Shooting()
     {
-        CreateAndStartGameWithThreePlayers();
+        await CreateAndStartGameWithThreePlayers();
         _player2.Bullets = 1;
 
-        _player1.SetSelectedCard(Card.Load);
-        _player2.SetSelectedCard(new AttackCard(_player1.Character));
-        _player3.SetSelectedCard(Card.Dodge);
+        await _player1.SetSelectedCardAsync(Card.Load);
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player3.SetSelectedCardAsync(Card.Dodge);
 
         _player1.Shots.ShouldBe(1);
         _player1.Bullets.ShouldBe(0);
@@ -362,16 +382,16 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Shooters_Split_Money_1()
+    public async Task Shooters_Split_Money_1()
     {
-        CreateAndStartGameWithThreePlayers(new Rules { CoinsToWin = 6, ShotsToDie = 2 });
+        await CreateAndStartGameWithThreePlayers(new Rules { CoinsToWin = 6, ShotsToDie = 2 });
         _player1.Coins = 3;
         _player2.Bullets = 1;
         _player3.Bullets = 1;
 
-        _player1.SetSelectedCard(Card.Load);
-        _player2.SetSelectedCard(new AttackCard(_player1.Character));
-        _player3.SetSelectedCard(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(Card.Load);
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
 
         _player1.Alive.ShouldBeFalse();
         _player2.Coins.ShouldBe(1);
@@ -379,16 +399,16 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Shooters_Split_Money_2()
+    public async Task Shooters_Split_Money_2()
     {
-        CreateAndStartGameWithThreePlayers(new Rules { CoinsToWin = 6, ShotsToDie = 2 });
+        await CreateAndStartGameWithThreePlayers(new Rules { CoinsToWin = 6, ShotsToDie = 2 });
         _player1.Coins = 3;
         _player1.Shots = 1;
         _player2.Bullets = 1;
 
-        _player1.SetSelectedCard(Card.Load);
-        _player2.SetSelectedCard(new AttackCard(_player1.Character));
-        _player3.SetSelectedCard(Card.Load);
+        await _player1.SetSelectedCardAsync(Card.Load);
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player3.SetSelectedCardAsync(Card.Load);
 
         _player1.Alive.ShouldBeFalse();
         _player2.Coins.ShouldBe(3);
@@ -398,20 +418,20 @@ public class GameLogicTests
     [InlineData(0, 1)]
     [InlineData(1, 0)]
     [InlineData(2, 2)]
-    public void Shooters_Split_Money_3(int player1Coins, int player2Coins)
+    public async Task Shooters_Split_Money_3(int player1Coins, int player2Coins)
     {
-        var game = _gameRepository.CreateGame(new Rules { ShotsToDie = 1 });
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
-        game.Start();
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { ShotsToDie = 1 });
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
+        await game.StartAsync();
 
         _player1.Coins = player1Coins;
         _player1.Bullets = 1;
         _player2.Coins = player2Coins;
         _player2.Bullets = 1;
 
-        _player1.SetSelectedCard(new AttackCard(_player2.Character));
-        _player2.SetSelectedCard(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
 
         _player1.Alive.ShouldBeFalse();
         _player1.Coins.ShouldBe(player1Coins);
@@ -419,9 +439,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Shooters_Split_Money_4()
+    public async Task Shooters_Split_Money_4()
     {
-        CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 2 });
+        await CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 2 });
         _player1.Bullets = 1;
         _player2.Coins = 2;
         _player2.Bullets = 1;
@@ -429,9 +449,9 @@ public class GameLogicTests
         _player3.Bullets = 1;
         _player3.Shots = 1;
 
-        _player1.SetSelectedCard(new AttackCard(_player2.Character));
-        _player2.SetSelectedCard(new AttackCard(_player3.Character));
-        _player3.SetSelectedCard(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
 
         _player1.Alive.ShouldBeTrue();
         _player2.Alive.ShouldBeFalse();
@@ -442,9 +462,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void Shooters_Split_Money_5()
+    public async Task Shooters_Split_Money_5()
     {
-        CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 2 });
+        await CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 2 });
         _player1.Bullets = 1;
         _player2.Coins = 2;
         _player2.Bullets = 1;
@@ -452,9 +472,9 @@ public class GameLogicTests
         _player3.Bullets = 1;
         _player3.Shots = 1;
 
-        _player1.SetSelectedCard(new AttackCard(_player2.Character));
-        _player2.SetSelectedCard(new AttackCard(_player3.Character));
-        _player3.SetSelectedCard(new AttackCard(_player2.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Character));
 
         _player1.Alive.ShouldBeTrue();
         _player2.Alive.ShouldBeFalse();
@@ -471,9 +491,9 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void When_All_Are_Dead_At_Same_Time_There_Is_No_Winner()
+    public async Task When_All_Are_Dead_At_Same_Time_There_Is_No_Winner()
     {
-        var game = CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 1 });
+        var game = await CreateAndStartGameWithThreePlayers(new Rules { ShotsToDie = 1 });
         _player1.Coins = 2;
         _player1.Bullets = 1;
         _player2.Coins = 2;
@@ -481,9 +501,9 @@ public class GameLogicTests
         _player3.Coins = 2;
         _player3.Bullets = 1;
 
-        _player1.SetSelectedCard(new AttackCard(_player2.Character));
-        _player2.SetSelectedCard(new AttackCard(_player3.Character));
-        _player3.SetSelectedCard(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
 
         _player1.Alive.ShouldBeFalse();
         _player2.Alive.ShouldBeFalse();
@@ -496,12 +516,12 @@ public class GameLogicTests
     }
 
     [Fact]
-    public void A_Game_Starts_Automatically_When_Reached_Max_Players()
+    public async Task A_Game_Starts_Automatically_When_Reached_Max_Players()
     {
-        var game = _gameRepository.CreateGame(new Rules { MaximumPlayerCount = 3 });
-        game.AddPlayer(_player1);
-        game.AddPlayer(_player2);
-        game.AddPlayer(_player3);
+        var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { MaximumPlayerCount = 3 });
+        await game.AddPlayerAsync(_player1);
+        await game.AddPlayerAsync(_player2);
+        await game.AddPlayerAsync(_player3);
 
         game.State.ShouldBe(GameState.Playing);
     }

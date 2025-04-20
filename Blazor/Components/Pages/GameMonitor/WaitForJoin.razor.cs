@@ -5,7 +5,7 @@ using QRCoder;
 
 namespace Blazor.Components.Pages.GameMonitor;
 
-public partial class WaitForJoin : IDisposable
+public partial class WaitForJoin
 {
     [Inject] public NavigationManager NavigationManager { get; set; } = null!;
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
@@ -13,7 +13,6 @@ public partial class WaitForJoin : IDisposable
 
     private string? _gameUrl;
     private string? _qrCodeImageAsBase64;
-
 
     protected override void OnInitialized()
     {
@@ -23,32 +22,10 @@ public partial class WaitForJoin : IDisposable
         var qrCodeData = qrEncoder.CreateQrCode(_gameUrl, QRCodeGenerator.ECCLevel.L);
         using var qrCode = new Base64QRCode(qrCodeData);
         _qrCodeImageAsBase64 = qrCode.GetGraphic(20, Color.DarkOrange, Color.White);
-
-        Game.PlayerJoined += PlayerCountChanged;
-        Game.PlayerLeft += PlayerCountChanged;
-        Game.GameStateChanged += GameStateChanged;
-
     }
 
-    private void PlayerCountChanged(object? sender, EventArgs e)
+    private async Task StartGameAsync()
     {
-        PlayerCountChangedAction.Invoke();
-    }
-
-    private void GameStateChanged(object? sender, EventArgs e)
-    {
-        GameStateChangedAction.Invoke();
-    }
-
-    public void Dispose()
-    {
-        Game.PlayerJoined -= PlayerCountChanged;
-        Game.PlayerLeft -= PlayerCountChanged;
-        Game.GameStateChanged -= GameStateChanged;
-    }
-
-    private void StartGame()
-    {
-        Game.Start();
+        await Game.StartAsync();
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace Shared.Cards;
 
-public class AttackCard(Character target) : Card(CardType.Attack, $"{nameof(CardType.Attack)} {target.Name}")
+//public class AttackCard(Character target) : Card(CardType.Attack, $"{nameof(CardType.Attack)} {target.Name}")
+public class AttackCard(Character target) : Card(CardType.Attack, $"{nameof(CardType.Attack)}")
 {
     public Character Target { get; set; } = target;
 
