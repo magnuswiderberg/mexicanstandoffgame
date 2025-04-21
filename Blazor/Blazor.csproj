@@ -7,7 +7,7 @@
 		<AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
 	</PropertyGroup>
 
-	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' != 'Release'">
 		<Exec Command="npm run build:css" />
 	</Target>
 
