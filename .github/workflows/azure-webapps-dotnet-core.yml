@@ -26,7 +26,7 @@ env:
 
 on:
   push:
-    branches: [ "initial/signalr" ]
+    branches: [ "initial-signalr" ]
   workflow_dispatch:
 
 permissions:
