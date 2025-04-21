@@ -13,17 +13,22 @@ builder.Services
 
 
 builder.Services.AddSignalR();
-builder.Services.AddResponseCompression(options =>
-{
-    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
-});
+
+// TODO: Makes mp3 files not work when deployed in Azure
+//builder.Services.AddResponseCompression(options =>
+//{
+//    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
+//});
 
 builder.Services.AddSingleton<GameRepository>();
 builder.Services.AddScoped<IGameEvents, GameEventsHub>();
 
 
 var app = builder.Build();
-app.UseResponseCompression(); // Note: Needs to added immediately after app.Build()
+
+
+// TODO: Makes mp3 files not work when deployed in Azure
+// app.UseResponseCompression(); // Note: Needs to added immediately after app.Build()
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -50,4 +55,4 @@ app.MapRazorComponents<App>()
 
 app.MapHub<GameEventsHub>(IGameEvents.HubUrl); // Note: Should be added just before app.Run()
 
-app.Run();
+await app.RunAsync();
