@@ -45,17 +45,18 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    ContentTypeProvider = new FileExtensionContentTypeProvider
-    {
-        Mappings =
-        {
-            [".mp3"] = "audio/mpeg"
-        }
-    }
-});
-app.MapStaticAssets();
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    ContentTypeProvider = new FileExtensionContentTypeProvider
+//    {
+//        Mappings =
+//        {
+//            [".mp3"] = "audio/mpeg"
+//        }
+//    }
+//});
+app.UseStaticFiles();
+//app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
