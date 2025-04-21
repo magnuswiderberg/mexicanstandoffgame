@@ -2,6 +2,7 @@ using Blazor.Components;
 using Blazor.GameEvents;
 using Game.Repository;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.StaticFiles;
 using Shared.GameEvents;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,12 +14,10 @@ builder.Services
 
 
 builder.Services.AddSignalR();
-
-// TODO: Makes mp3 files not work when deployed in Azure
-//builder.Services.AddResponseCompression(options =>
-//{
-//    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
-//});
+builder.Services.AddResponseCompression(options =>
+{
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
+});
 
 builder.Services.AddSingleton<GameRepository>();
 builder.Services.AddScoped<IGameEvents, GameEventsHub>();
@@ -26,9 +25,7 @@ builder.Services.AddScoped<IGameEvents, GameEventsHub>();
 
 var app = builder.Build();
 
-
-// TODO: Makes mp3 files not work when deployed in Azure
-// app.UseResponseCompression(); // Note: Needs to added immediately after app.Build()
+app.UseResponseCompression(); // Note: Needs to added immediately after app.Build()
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -48,7 +45,16 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = new FileExtensionContentTypeProvider
+    {
+        Mappings =
+        {
+            [".mp3"] = "audio/mpeg"
+        }
+    }
+});
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
