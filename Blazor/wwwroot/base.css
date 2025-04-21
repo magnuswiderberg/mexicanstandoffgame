@@ -372,6 +372,9 @@
   .pb-\[3px\] {
     padding-bottom: 3px;
   }
+  .pl-4 {
+    padding-left: calc(var(--spacing) * 4);
+  }
   .pl-5 {
     padding-left: calc(var(--spacing) * 5);
   }
