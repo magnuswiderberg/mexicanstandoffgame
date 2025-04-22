@@ -52,6 +52,8 @@ npm install tailwindcss @tailwindcss/cli
 
 - support for bring your own bot + example bots
 - Support for giving up => QUIT state on Player
+	- Signal to server
+	- Recalculate game state
 - Countdown time
 
 ### Play.razor

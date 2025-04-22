@@ -28,7 +28,7 @@ public partial class Play : IAsyncDisposable
     private bool _waitingForMonitor;
     //private string? _appearClassName;
     private bool _gameHasStartedAlready;
-    private string? _rejoinStatus;
+    //private string? _rejoinStatus;
 
     private bool _initializing = true;
     private HubConnection? _hubConnection;
@@ -228,36 +228,36 @@ public partial class Play : IAsyncDisposable
         await _player.SetSelectedCardAsync(card);
     }
 
-    private async Task TryRejoin()
-    {
-        _rejoinStatus = null;
-        await InvokeAsync(StateHasChanged);
-        await Task.Delay(200);
+    //private async Task TryRejoin()
+    //{
+    //    _rejoinStatus = null;
+    //    await InvokeAsync(StateHasChanged);
+    //    await Task.Delay(200);
 
-        if (_game?.Id == GameRepository.DeveloperGameId)
-        {
-            _game = GameRepository.GetGame(_game.Id);
-        }
+    //    if (_game?.Id == GameRepository.DeveloperGameId)
+    //    {
+    //        _game = GameRepository.GetGame(_game.Id);
+    //    }
 
-        if (_game == null)
-        {
-            _rejoinStatus = "The game is no longer available";
-        }
-        else if (_game.State != GameState.Created)
-        {
-            _rejoinStatus = "The game does not accept new players at the moment.";
-        }
-        else
-        {
-            await AddPlayerAsync();
-            if (_gameIsFull)
-            {
-                _rejoinStatus = "The game is full, so can't rejoin";
-            }
-        }
+    //    if (_game == null)
+    //    {
+    //        _rejoinStatus = "The game is no longer available";
+    //    }
+    //    else if (_game.State != GameState.Created)
+    //    {
+    //        _rejoinStatus = "The game does not accept new players at the moment.";
+    //    }
+    //    else
+    //    {
+    //        await AddPlayerAsync();
+    //        if (_gameIsFull)
+    //        {
+    //            _rejoinStatus = "The game is full, so can't rejoin";
+    //        }
+    //    }
 
-        await InvokeAsync(StateHasChanged);
-    }
+    //    await InvokeAsync(StateHasChanged);
+    //}
 
     public async ValueTask DisposeAsync()
     {

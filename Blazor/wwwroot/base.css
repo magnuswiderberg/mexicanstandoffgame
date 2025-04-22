@@ -191,20 +191,11 @@
   }
 }
 @layer utilities {
-  .absolute {
-    position: absolute;
-  }
   .fixed {
     position: fixed;
   }
   .static {
     position: static;
-  }
-  .top-2 {
-    top: calc(var(--spacing) * 2);
-  }
-  .right-2 {
-    right: calc(var(--spacing) * 2);
   }
   .m-6 {
     margin: calc(var(--spacing) * 6);
@@ -224,14 +215,11 @@
   .my-10 {
     margin-block: calc(var(--spacing) * 10);
   }
-  .-mt-\[0\.85rem\] {
-    margin-top: calc(0.85rem * -1);
+  .-mt-\[0\.9rem\] {
+    margin-top: calc(0.9rem * -1);
   }
   .-mt-\[1\.2rem\] {
     margin-top: calc(1.2rem * -1);
-  }
-  .mt-0 {
-    margin-top: calc(var(--spacing) * 0);
   }
   .mt-1 {
     margin-top: calc(var(--spacing) * 1);
@@ -256,9 +244,6 @@
   }
   .mb-6 {
     margin-bottom: calc(var(--spacing) * 6);
-  }
-  .mb-10 {
-    margin-bottom: calc(var(--spacing) * 10);
   }
   .mb-12 {
     margin-bottom: calc(var(--spacing) * 12);
@@ -317,9 +302,6 @@
   .flex-col {
     flex-direction: column;
   }
-  .content-center {
-    align-content: center;
-  }
   .items-center {
     align-items: center;
   }
@@ -359,16 +341,9 @@
   .rounded-xl {
     border-radius: var(--radius-xl);
   }
-  .border {
-    border-style: var(--tw-border-style);
-    border-width: 1px;
-  }
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
-  }
-  .border-black {
-    border-color: var(--color-black);
   }
   .border-neutral-300 {
     border-color: var(--color-neutral-300);

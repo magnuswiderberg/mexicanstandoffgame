@@ -11,7 +11,7 @@
     @* <span class="uppercase">@_player?.Name</span> *@
     <span class="flex cursor-pointer flex-col">
         <span>🟰</span>
-        <span class="-mt-[0.85rem]">➖</span>
+        <span class="-mt-[0.9rem]">➖</span>
         @* TODO: quit, link to start page, change nickname, show my stats, show game state? *@
     </span>
 </div>
@@ -189,12 +189,12 @@
             }
         </div>
 
-        <button class="mt-10 button" @onclick="TryRejoin">Rejoin</button>
+        @* <button class="mt-10 button" @onclick="TryRejoin">Rejoin</button>
 
         @if (_rejoinStatus != null)
         {
             <div class="appear mt-5 text-center">@_rejoinStatus</div>
-        }
+        } *@
     }
     else
     {
