@@ -45,18 +45,13 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-//app.UseStaticFiles(new StaticFileOptions
-//{
-//    ContentTypeProvider = new FileExtensionContentTypeProvider
-//    {
-//        Mappings =
-//        {
-//            [".mp3"] = "audio/mpeg"
-//        }
-//    }
-//});
-app.UseStaticFiles();
-//app.MapStaticAssets();
+//app.MapStaticAssets(); // Note: this breaks mp3 support when deployed in Azure (Error 416 (Range Not Satisfiable))
+/*
+Can have been fixed in 9.0.2:
+https://github.com/dotnet/aspnetcore/issues/58829
+ */
+app.UseStaticFiles();    // Note: Use this instead for now
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

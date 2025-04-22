@@ -9,13 +9,21 @@ A quick mind game, implemented with Blazor and SignalR.
 
 ### Deployment
 
-To keep the cost low, a good option is to use an Azure Static Web App for deployment.
+Deploy as a .NET Blazor app, e.g. as an Azure Web App.
 
-But as a .NET Blazor app, it can be deployed anywhere you like.
+**azure-webapps-dotnet-core.yml**
+
+The GitHub workflow defined
+[`.github/workflows/azure-webapps-dotnet-core.yml`](.github/workflows/azure-webapps-dotnet-core.yml)
+will build and deploy the app to Azure.
+
+**NOTE:** In a GitHub repo, set secrets and variables:
+- `env.AZURE_WEBAPP_NAME`: Name of the Azure Web App
+- `secrets.AZURE_WEBAPP_PUBLISH_PROFILE`: Publish profile of the Azure Web App
 
 ## Tailwind
 
-On Prebuild, we run `npm run build:css`, but to continually build base.css, use
+Locally, on Prebuild, we run `npm run build:css`, but to continually build base.css, use
 
 ```sh
 npm run watch:css
@@ -51,6 +59,10 @@ npm install tailwindcss @tailwindcss/cli
 
 ### Play.razor
 
+- Navigation
+	- Some back button or Home link when
+		- Waiting for players
+		- In game as well
 - Game ended
 	- If winner:  Sound. Else other sound
 	- If game with same id exists
@@ -63,9 +75,18 @@ npm install tailwindcss @tailwindcss/cli
 - Support for removing input name from local storage to get new suggestion
 	- Or just support for suggestion
 - Maybe keep character id in local storage
+- Optimization
+	- With app.MapStaticAssets gone, use smaller images
 
 ### PlayMonitor.razor
 
+- Layout
+	- We have a little less real estate that we thought on actual phone
+- Navigation
+	- Some back button or Home link when
+		- Waiting for other players
+		- In game as well?
+		- When game has ended, anyway
 - Responsive layout: support for phone
 	- Maybe alternative:
 		- Use no monitor
