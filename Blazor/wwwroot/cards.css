@@ -1,15 +1,25 @@
 .selectable-cards {
+    --overlap-x: 1.25rem;
+    --overlap-y: 1.5rem;
     @apply flex flex-wrap justify-center;
+    margin-left: calc(var(--overlap-x) / 2);
+    margin-right: calc(var(--overlap-x) / 2);
+    margin-top: var(--overlap-y);
 }
 
 .selectable-card {
     @apply text-black bg-white shadow-md shadow-amber-900/40;
     @apply flex flex-col gap-3 justify-center items-center;
     @apply m-1 p-3;
-    @apply w-[8rem] h-[11rem];
+    @apply w-[7rem] h-[9rem];
+    @apply -ml-(--overlap-x) -mt-(--overlap-y);
     @apply rounded-md border border-solid border-(--major-text-fg);
     @apply cursor-pointer touch-none;
     transition: all 0.3s;
+}
+
+.selectable-card:nth-of-type(2n) {
+    margin-top: calc(var(--overlap-y) * -1.5);
 }
 
 .selectable-card.selected {
@@ -19,9 +29,12 @@
 .selectable-card .card-name {
     @apply break-all uppercase;
 }
+
 .selectable-card .target {
-    @apply uppercase text-center;
+    @apply uppercase text-center leading-4;
+
 }
+
 .selectable-card .long-name {
     @apply break-all;
 }

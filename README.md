@@ -50,10 +50,7 @@ npm install tailwindcss @tailwindcss/cli
 
 ## TODO items
 
-- github actions
-- parameterize pipeline yaml file
-- support for bots
-- example bots
+- support for bring your own bot + example bots
 - Support for giving up => QUIT state on Player
 - Countdown time
 
@@ -80,8 +77,6 @@ npm install tailwindcss @tailwindcss/cli
 
 ### PlayMonitor.razor
 
-- Layout
-	- We have a little less real estate that we thought on actual phone
 - Navigation
 	- Some back button or Home link when
 		- Waiting for other players
