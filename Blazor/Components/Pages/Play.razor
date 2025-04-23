@@ -92,6 +92,7 @@
         <div class="mt-10 gap-3 bg-white p-5 flex flex-col items-center rounded-lg shadow-lg">
             Nickname
             <input type="text" @bind="@_playerName" size="15" maxlength="@MaxPlayerNameLength" class="text-center" />
+            <img src="img/randomize.svg" class="w-[30px] cursor-pointer" title="Generate another nickname" @onclick="RandomizeNickname" />
         </div>
         <button class="mt-10 button large" @onclick="JoinGameAsync">Join the game!</button>
         <div class="mt-10">@_playerNameInfo</div>

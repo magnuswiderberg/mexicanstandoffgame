@@ -45,7 +45,7 @@
                     @(result.Attackers.Count > 1 ? "all attack" : "attacks")
                 </div>
             }
-            
+
             <div class="gap-2 flex flex-col">
                 @foreach (var player in result.TargetPlayers)
                 {
@@ -55,7 +55,7 @@
                     </div>
                 }
             </div>
-            
+
             @switch (result.Type)
             {
                 case RoundActionType.Dodge:
@@ -77,90 +77,79 @@
     }
     else
     {
-        <div class="mt-10 p-4 bg-white flex flex-col items-center rounded-xl shadow-lg lg:text-xl">
+        <div class="mt-10 p-4 bg-white flex flex-col items-center rounded-xl text-sm shadow-lg md:text-lg lg:text-xl">
             <table id="game-monitor-game-state">
                 <thead>
-                <tr>
-                    <th class="text-left">Player</th>
-                    <th>Life</th>
-                    <th>Gold</th>
-                    <th>Bullets</th>
-                    @if (Game.State == GameState.Playing)
-                    {
-                        <th>Trend</th>
-                        <th>Ready?</th>
-                    }
-                    @if (Game.State == GameState.Ended)
-                    {
-                        <th>Result</th>
-                    }
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var player in Game.Players)
-                {
-                    <tr class="@(player.Winner ? "winner" : "")">
-                        <td class="gap-3 flex items-center justify-start @(player.Alive ? "" : "line-through")" @ondblclick="async () => await RemovePlayerAsync(player)">
-
-                            <GameCharacter Player="@player" />
-
-                            <span class="uppercase">
-                                @player.Name
-                                @if (player is BotPlayer)
-                                {
-                                    <br />
-                                    <span>(bot)</span>
-                                }
-                            </span>
-                        </td>
-
-                        <td>
-                            <PlayerHealth Player="player" Rules="Game.Rules" />
-                        </td>
-
-                        <td>
-                            <PlayerCoins Player="player" />
-                        </td>
-
-                        <td>
-                            <PlayerBullets Player="player" />
-                        </td>
-
+                    <tr>
+                        <th class="text-left">Player</th>
+                        <th>Life</th>
+                        <th>Gold</th>
+                        <th>Bullets</th>
                         @if (Game.State == GameState.Playing)
                         {
-                            <td>
-                                <PlayerTrend Player="@player"/>
-                            </td>
-
-                            <td>
-                                @if (player.Alive)
-                                {
-                                    @if (player.SelectedCard == null)
-                                    {
-                                        <WaitingAnimation />
-                                    }
-                                    else
-                                    {
-                                        <span>✔️</span>
-                                    }
-                                }
-                            </td>
+                            <th>Trend</th>
+                            <th>Ready?</th>
                         }
-                        else if (Game.State == GameState.Ended)
+                        @if (Game.State == GameState.Ended)
                         {
-                            <td>
-                                @if (player.Winner)
-                                {
-                                    <span class="text-3xl">🏆</span>
-                                }
-                                else if (Game.Winners.Count == 0)
-                                {
-                                    <i class="text-sm">No winner&hellip;</i>
-                                }
-                            </td>
+                            <th>Result</th>
                         }
                     </tr>
-                }
+                </thead>
+                <tbody>
+                    @foreach (var player in Game.Players)
+                    {
+                        <tr class="@(player.Winner ? "winner" : "")">
+                            <td class="gap-3 flex items-center justify-start @(player.Alive ? "" : "line-through")" @ondblclick="async () => await RemovePlayerAsync(player)">
+
+                                <GameCharacter Player="@player" />
+
+                                <span class="uppercase">
+                                    @player.Name
+                                    @if (player is BotPlayer)
+                                    {
+                                        <br />
+                                        <span>(bot)</span>
+                                    }
+                                </span>
+                            </td>
+
+                            <td><PlayerHealth Player="player" Rules="Game.Rules" /></td>
+                            <td><PlayerCoins Player="player" /></td>
+                            <td><PlayerBullets Player="player" /></td>
+
+                            @if (Game.State == GameState.Playing)
+                            {
+                                <td><PlayerTrend Player="@player" /></td>
+                                <td>
+                                    @if (player.Alive)
+                                    {
+                                        @if (player.SelectedCard == null)
+                                        {
+                                            <WaitingAnimation />
+                                        }
+                                        else
+                                        {
+                                            <span>✔️</span>
+                                        }
+                                    }
+                                </td>
+                            }
+                            else if (Game.State == GameState.Ended)
+                            {
+                                <td>
+                                    @if (player.Winner)
+                                    {
+                                        <span class="text-3xl">🏆</span>
+                                    }
+                                    else if (Game.Winners.Count == 0)
+                                    {
+                                        <i class="text-sm">No winner&hellip;</i>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -168,10 +157,12 @@
         <ConfirmDialog @ref="_confirmDialog" />
     }
 
-    <audio id="sound-coin" src="/sound/coin.mp3" preload="auto"></audio>
-    <audio id="sound-dodge" src="/sound/dodge.mp3" preload="auto"></audio>
-    <audio id="sound-grunt" src="/sound/grunt.mp3" preload="auto"></audio>
-    <audio id="sound-load" src="/sound/load.mp3" preload="auto"></audio>
-    <audio id="sound-missed-chest" src="/sound/missed-chest.mp3" preload="auto"></audio>
-    <audio id="sound-shot" src="/sound/shot.mp3" preload="auto"></audio>
+    <div class="hidden">
+        <audio id="sound-coin" src="/sound/coin.mp3" preload="auto"></audio>
+        <audio id="sound-dodge" src="/sound/dodge.mp3" preload="auto"></audio>
+        <audio id="sound-grunt" src="/sound/grunt.mp3" preload="auto"></audio>
+        <audio id="sound-load" src="/sound/load.mp3" preload="auto"></audio>
+        <audio id="sound-missed-chest" src="/sound/missed-chest.mp3" preload="auto"></audio>
+        <audio id="sound-shot" src="/sound/shot.mp3" preload="auto"></audio>
+    </div>
 </div>

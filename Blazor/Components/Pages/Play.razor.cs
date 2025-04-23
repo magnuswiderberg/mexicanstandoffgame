@@ -131,7 +131,7 @@ public partial class Play : IAsyncDisposable
         if (playerNameFromLocalStorage.Success) _playerName = playerNameFromLocalStorage.Value;
         if (string.IsNullOrWhiteSpace(_playerName))
         {
-            _playerName = SuggestedNicknames[Random.Shared.Next(SuggestedNicknames.Length)];
+            RandomizeNickname();
         }
 
         _initializing = false;
@@ -318,5 +318,11 @@ public partial class Play : IAsyncDisposable
     {
         _showMenu = !_showMenu;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void RandomizeNickname()
+    {
+        _playerName = SuggestedNicknames[Random.Shared.Next(SuggestedNicknames.Length)];
+        StateHasChanged();
     }
 }

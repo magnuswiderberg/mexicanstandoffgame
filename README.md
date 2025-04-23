@@ -59,40 +59,14 @@ npm install tailwindcss @tailwindcss/cli
 
 ### Play.razor
 
-- Navigation
-	- Some back button or Home link when
-		- Waiting for players
-		- In game as well
 - Game ended
 	- If winner:  Sound. Else other sound
 	- If game with same id exists
 		- reload the game
 		- Offer to rejoin
 - Maybe: support for switching to game state view
-- After QUIT (to start page), offer rejoin
-	- Maybe save played games in local storage? Or in memory?
-	- List games in State Created
-- Support for removing input name from local storage to get new suggestion
-	- Or just support for suggestion
 - Maybe keep character id in local storage
 
-### PlayMonitor.razor
-
-- Navigation
-	- Some back button or Home link when
-		- Waiting for other players
-		- In game as well?
-		- When game has ended, anyway
-- Responsive layout: support for phone
-	- Maybe alternative:
-		- Use no monitor
-		- All players can switch to game state on their device
-- Kick player: Add confirm
-- Maybe "Fix" button
-	- Would try to resolve things
-		- Trigger bots again, if there is no selected card
-		- etc
-		
 ## Resources
 
 SVG icons: https://www.svgrepo.com/

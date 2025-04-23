@@ -1,6 +1,5 @@
 ﻿window.playSound = (elementId) => {
     try {
-        console.log("playing", elementId)
         const audioElement = document.getElementById(elementId);
 
         // Create a new Audio object to support concurrent sounds
