@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Blazor.Components.Elements;
 using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Game.Repository;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Components.Web;
 using Shared.Cards;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -33,6 +35,9 @@ public partial class Play : IAsyncDisposable
     private bool _initializing = true;
     private HubConnection? _hubConnection;
     private bool _lastRevealDone;
+    
+    private bool _showMenu;
+    private ConfirmDialog _confirmDialog = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,6 +101,7 @@ public partial class Play : IAsyncDisposable
             // TODO: _lastRevealDone is set too early
             if (gameStateWhenRevealed == GameState.Ended) _lastRevealDone = true;
             _waitingForMonitor = false;
+            _showMenu = false;
             await InvokeAsync(StateHasChanged);
         });
 
@@ -287,4 +293,30 @@ public partial class Play : IAsyncDisposable
         "Catalina Torres",
         "Vicente Alvarez"
     ];
+
+    private async Task MaybeQuit()
+    {
+        await _confirmDialog.ShowAsync(new ConfirmDialog.Question("Really quit the game?", "Yes", "No"), async quit =>
+        {
+            if (quit == true && _game != null && _player != null)
+            {
+                await _game.RemovePlayerAsync(_player);
+                _player = null;
+                _showMenu = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+    }
+    
+    private async Task HideMenuAsync()
+    {
+        _showMenu = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ToggleMenuAsync()
+    {
+        _showMenu = !_showMenu;
+        await InvokeAsync(StateHasChanged);
+    }
 }

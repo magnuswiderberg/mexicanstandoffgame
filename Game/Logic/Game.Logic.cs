@@ -52,13 +52,17 @@ public partial class Game
 
         if (roundCompleted)
         {
-            await gameEvents.RoundResultsCompletedAsync(Id);
-            foreach (var p in Players)
-            {
-                p.NewRound();
-            }
-            await gameEvents.NewRoundAsync(Id);
             await MaybeEndGameAsync();
+            await gameEvents.RoundResultsCompletedAsync(Id);
+            if (State == GameState.Playing)
+            {
+                foreach (var p in Players)
+                {
+                    p.NewRound();
+                }
+                // TODO: maybe trigger new round manually?
+                await gameEvents.NewRoundAsync(Id);
+            }
         }
     }
 

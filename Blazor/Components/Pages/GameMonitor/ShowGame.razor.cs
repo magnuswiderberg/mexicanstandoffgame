@@ -1,4 +1,6 @@
-﻿using Game.Bots;
+﻿using System.Net;
+using Blazor.Components.Elements;
+using Game.Bots;
 using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -17,6 +19,7 @@ public partial class ShowGame
 
     private int? _revealingRoundResultIndex;
     private string? _appearClassName;
+    private ConfirmDialog _confirmDialog = null!;
 
 
     public async Task RoundResultsCompletedAsync()
@@ -29,29 +32,29 @@ public partial class ShowGame
             }
         }
 
-        if (Game.Players.All(x => x is BotPlayer))
-        {
-            await Game.SetRoundCompletedAsync();
-        }
-        else
+        //if (Game.Players.All(x => x is BotPlayer))
+        //{
+        //    await Game.SetRoundCompletedAsync();
+        //}
+        //else
         {
             _revealingRoundResultIndex = null;
             _aggregatedRoundResult = Game.CreateLastRoundAggregate();
-            _revealingRoundResultIndex = 0;
-            await InvokeAsync(SetAppearClassNameDelayed);
-
-            if (_revealingRoundResultIndex.HasValue)
+            if (_aggregatedRoundResult.Count != 0)
             {
-                var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
-                await PlayActionSoundAsync(result);
+                _revealingRoundResultIndex = 0;
+                await InvokeAsync(SetAppearClassNameDelayed);
+
+                if (_revealingRoundResultIndex.HasValue)
+                {
+                    var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
+                    await PlayActionSoundAsync(result);
+                }
             }
         }
 
         await InvokeAsync(StateHasChanged);
     }
-
-
-        
 
     private async Task SetAppearClassNameDelayed()
     {
@@ -73,7 +76,6 @@ public partial class ShowGame
 
             await Game.SetRoundCompletedAsync();
             await HubConnection.InvokeAsync(IGameEvents.RevealDoneMethod, Game.Id, Game.State);
-
         }
         else if (_revealingRoundResultIndex.HasValue)
         {
@@ -146,6 +148,11 @@ public partial class ShowGame
 
     private async Task RemovePlayerAsync(Player player)
     {
-        await Game.RemovePlayerAsync(player);
+        var question = $"Really kick {WebUtility.HtmlEncode(player.Name)} from the game?";
+        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No"), async remove =>
+        {
+            if (remove != true) return;
+            await Game.RemovePlayerAsync(player);
+        });
     }
 }

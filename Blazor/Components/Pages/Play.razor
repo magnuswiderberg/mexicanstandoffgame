@@ -7,13 +7,8 @@
     [Parameter] public string? GameId { get; set; }
 }
 
-<div class="gap-3 -mx-[0.8rem] -mt-[1.2rem] flex items-center justify-end sm:-mx-0 sm:-mt-0">
-    @* <span class="uppercase">@_player?.Name</span> *@
-    <span class="flex cursor-pointer flex-col">
-        <span>🟰</span>
-        <span class="-mt-[0.9rem]">➖</span>
-        @* TODO: quit, link to start page, change nickname, show my stats, show game state? *@
-    </span>
+<div class="-mx-[0.8rem] -mt-[0.8rem] flex items-center justify-end sm:-mx-0 sm:-mt-0">
+    <img src="img/menu.svg" class="w-4 h-4 cursor-pointer" @onclick="ToggleMenuAsync" />
 </div>
 
 <div class="mt-5 mx-auto flex max-w-2xl flex-col items-center">
@@ -35,6 +30,36 @@
             Initializing game&hellip;
             <WaitingAnimation />
         </div>
+    }
+    else if (_showMenu)
+    {
+        <div class="px-10 py-6 bg-white border-amber-600 gap-5 flex flex-col items-center rounded-lg border-2 shadow-xl">
+            @if (_game != null && _player != null)
+            {
+                <div class="uppercase">
+                    Game ID: @_game.Id
+                </div>
+                <div>
+                    <PlayerHealth Player="_player" Rules="_game.Rules"/>
+                    <PlayerCoins Player="_player"/>
+                    <PlayerBullets Player="_player"/>
+                </div>
+                @if (_player.SuccessTrend(1).Any())
+                {
+                    <div>
+                        Action trend: <PlayerTrend Player="@_player"/>
+                    </div>
+                }
+
+                <button class="mt-5 button in-menu" @onclick="MaybeQuit">Quit game</button>
+                <ConfirmDialog @ref="_confirmDialog"/>
+            }
+            else
+            {
+                <button class="button in-menu" @onclick='() => NavigationManager.NavigateTo("/")'>To start page</button>
+            }
+        </div>
+        <button class="mt-6 button neutral in-menu" @onclick="HideMenuAsync">✖️ Close menu</button>
     }
     else if (_game == null)
     {
@@ -159,7 +184,7 @@
     else if (_game.State is GameState.Ended)
     {
         <div class="mt-6">
-            <img src="img/signature-villans.jpg" class="max-w-[100px]" />
+            <img src="img/signature-villans.png" class="max-w-[100px]" />
         </div>
 
         <div class="mt-10 bg-white p-5 flex flex-col items-center rounded-lg text-lg">

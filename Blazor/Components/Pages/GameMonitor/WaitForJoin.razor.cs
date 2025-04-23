@@ -21,7 +21,7 @@ public partial class WaitForJoin
         using var qrEncoder = new QRCodeGenerator();
         var qrCodeData = qrEncoder.CreateQrCode(_gameUrl, QRCodeGenerator.ECCLevel.L);
         using var qrCode = new Base64QRCode(qrCodeData);
-        _qrCodeImageAsBase64 = qrCode.GetGraphic(20, Color.DarkOrange, Color.White);
+        _qrCodeImageAsBase64 = qrCode.GetGraphic(20, Color.FromArgb(255, 64, 64, 64), Color.White);
     }
 
     private async Task StartGameAsync()

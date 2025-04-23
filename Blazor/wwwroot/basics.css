@@ -34,6 +34,10 @@ a {
         @apply bg-white;
         @apply hover:bg-amber-900 hover:text-orange-100;
     }
+
+    &.in-menu {
+        @apply shadow-md;
+    }
 }
 
 input[type="text"],

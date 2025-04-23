@@ -1,0 +1,18 @@
+﻿@using Game.Model
+
+@code {
+    [Parameter]
+    public Player Player { get; set; } = null!;
+}
+
+@foreach (var result in Player.SuccessTrend(3))
+{
+    @if (result)
+    {
+        <span>👍</span>
+    }
+    else
+    {
+        <span>👎</span>
+    }
+}

@@ -55,6 +55,7 @@ npm install tailwindcss @tailwindcss/cli
 	- Signal to server
 	- Recalculate game state
 - Countdown time
+- Support for saving rule-sets in local storage
 
 ### Play.razor
 
@@ -74,8 +75,6 @@ npm install tailwindcss @tailwindcss/cli
 - Support for removing input name from local storage to get new suggestion
 	- Or just support for suggestion
 - Maybe keep character id in local storage
-- Optimization
-	- With app.MapStaticAssets gone, use smaller images
 
 ### PlayMonitor.razor
 
@@ -93,3 +92,7 @@ npm install tailwindcss @tailwindcss/cli
 	- Would try to resolve things
 		- Trigger bots again, if there is no selected card
 		- etc
+		
+## Resources
+
+SVG icons: https://www.svgrepo.com/

@@ -10,11 +10,11 @@
 <div class="mx-auto flex max-w-2xl flex-col items-center">
 
     <div class="mt-10 text-lg uppercase">Game ID: @Game.Id</div>
-    <div class="mt-1"><img src="data:image/png;base64,@_qrCodeImageAsBase64" class="max-w-64" /></div>
-    
-    <div class="mt-1">
+    <img src="data:image/png;base64,@_qrCodeImageAsBase64" class="mt-1 border-neutral-700 max-w-[20rem] border-8" alt="QR code"/>
+
+    <div class="mt-2">
         <a href="@_gameUrl">@_gameUrl</a>
-        <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">&#128209;</span>
+        <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">📋</span>
     </div>
 
     <div class="mt-10 gap-3 flex flex-col">

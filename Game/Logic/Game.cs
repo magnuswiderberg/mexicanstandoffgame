@@ -58,11 +58,23 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
     public async Task RemovePlayerAsync(Player player)
     {
         var listPlayer = Players.FirstOrDefault(p => p.Id == player.Id);
-        if (listPlayer == null) return;
-
-        if (((List<Player>)Players).Remove(listPlayer))
+        if (listPlayer != null)
         {
-            await gameEvents.PlayerLeftAsync(Id, player.Id);
+            if (((List<Player>)Players).Remove(listPlayer))
+            {
+                await gameEvents.PlayerLeftAsync(Id, player.Id);
+            }
+        }
+        var winnerPlayer = Winners.FirstOrDefault(p => p.Id == player.Id);
+        if (winnerPlayer != null)
+        {
+            ((List<Player>)Winners).Remove(winnerPlayer);
+        }
+
+        if (State == GameState.Playing)
+        {
+            await player.SetSelectedCardAsync(null);
+            await PlayerCardChangedAsync(player);
         }
     }
 

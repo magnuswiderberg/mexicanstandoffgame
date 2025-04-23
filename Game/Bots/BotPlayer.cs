@@ -47,7 +47,8 @@ public abstract class BotPlayer : Player
         };
         await RoundResult(playerResult, game);
 
-        base.NewRound();
-        await SelectCard(game);
+        // TODO: Check if this is needed
+        //base.NewRound();
+        //await SelectCard(game);
     }
 }

@@ -21,7 +21,7 @@ public partial class GameMonitor : IAsyncDisposable
 
     private Game.Logic.Game? _game;
 
-    private ShowGame? _showGameComponent;
+    private ShowGame _showGameComponent = null!;
     private HubConnection? _hubConnection;
     private bool _initializing = true;
     private bool _lastRevealDone;
@@ -87,7 +87,7 @@ public partial class GameMonitor : IAsyncDisposable
         });
         _hubConnection.On(IGameEvents.EventNames.RoundResultsCompleted, async () =>
         {
-            await _showGameComponent!.RoundResultsCompletedAsync();
+            await _showGameComponent.RoundResultsCompletedAsync();
         });
         _hubConnection.On<string, Card>(IGameEvents.EventNames.CardPlayed, async (playerId, card) =>
         {
@@ -95,6 +95,9 @@ public partial class GameMonitor : IAsyncDisposable
         });
         _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async (gameStateWhenRevealed) =>
         {
+            if (_game == null) return;
+            //await GameEvents.NewRoundAsync(_game.Id);
+
             // TODO: _lastRevealDone is set too early
             if (gameStateWhenRevealed == GameState.Ended) _lastRevealDone = true;
             await InvokeAsync(StateHasChanged);
