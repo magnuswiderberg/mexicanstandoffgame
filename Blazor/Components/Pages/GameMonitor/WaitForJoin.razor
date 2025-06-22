@@ -7,20 +7,26 @@
     [Parameter] public HubConnection HubConnection { get; set; } = null!;
 }
 
-<div class="mx-auto flex max-w-2xl flex-col items-center">
+<div class="relative mx-auto flex max-w-2xl flex-col items-center">
 
     <div class="mt-10 text-lg uppercase">Game ID: @Game.Id</div>
-    <img src="data:image/png;base64,@_qrCodeImageAsBase64" class="mt-1 border-neutral-700 max-w-[20rem] border-8" alt="QR code"/>
+    <img src="data:image/png;base64,@_qrCodeImageAsBase64" class="mt-1 max-w-[20rem] border-8 border-neutral-700" alt="QR code" />
+
+    <blockquote class="absolute -right-[12rem] -top-[1rem] mx-auto hidden md:block">
+        <div class="bubble left text-3xl">
+            Join!
+        </div>
+    </blockquote>
 
     <div class="mt-2">
         <a href="@_gameUrl">@_gameUrl</a>
         <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">📋</span>
     </div>
 
-    <div class="mt-10 gap-3 flex flex-col">
+    <div class="mt-10 flex flex-col gap-3">
         @foreach (var player in Game.Players)
         {
-            <div class="appear gap-5 flex items-center">
+            <div class="appear flex items-center gap-5">
                 <GameCharacter Player="@player" />
                 @player.Name
             </div>
@@ -35,6 +41,13 @@
     else
     {
         <button class="button large mt-8 cursor-pointer" @onclick="StartGameAsync">Start game</button>
+
+        <blockquote class="absolute -left-[10rem] bottom-[4rem] mx-auto hidden md:block">
+            <div class="bubble right text-3xl">
+                Start<br />game!
+            </div>
+        </blockquote>
+
     }
 
     <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>

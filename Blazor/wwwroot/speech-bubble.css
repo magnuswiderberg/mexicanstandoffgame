@@ -1,0 +1,41 @@
+﻿.bubble {
+    display: inline-block;
+    position: relative;
+    padding: 30px 40px;
+    border-radius: 30px;
+    border: 3px solid var(--bubble-border-color);
+    background: white;
+    color: var(--bubble-text-color);
+    font-family: "Permanent Marker";
+    clear: both;
+    &:before
+    {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        height: 50px;
+        width: 90px;
+    }
+
+    &.left {
+       &:before
+       {
+           border-radius: 0 0 100%;
+           box-shadow: -2px -2px 0 0 var(--bubble-border-color) inset,
+                       -23px 0 0 0 #fff inset,
+                       -25px -2px 0 0 var(--bubble-border-color) inset;
+           left: 0;
+       }
+    }
+
+    &.right {
+       &:before
+       {
+           border-radius: 0 0 0 100%;
+           box-shadow: 2px -2px 0 0 var(--bubble-border-color) inset,
+                       23px 0 0 0 #fff inset,
+                       25px -2px 0 0 var(--bubble-border-color) inset;
+           right: 0;
+       }
+    }
+}

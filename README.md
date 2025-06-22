@@ -26,6 +26,7 @@ will build and deploy the app to Azure.
 Locally, on Prebuild, we run `npm run build:css`, but to continually build base.css, use
 
 ```sh
+cd Blazor
 npm run watch:css
 ```
 Inspired by:
@@ -51,9 +52,6 @@ npm install tailwindcss @tailwindcss/cli
 ## TODO items
 
 - support for bring your own bot + example bots
-- Support for giving up => QUIT state on Player
-	- Signal to server
-	- Recalculate game state
 - Countdown time
 - Support for saving rule-sets in local storage
 
