@@ -8,8 +8,16 @@
 
 @theme {
     --major-text-fg: var(--color-amber-700);
+
     --bubble-border-color: var(--color-slate-700);
     --bubble-text-color: var(--color-slate-700);
+    --bubble-bg: white;
+}
+
+.bubble.tutorial {
+    --bubble-border-color: var(--color-slate-600);
+    --bubble-text-color: var(--color-slate-700);
+    --bubble-bg: var(--color-stone-100);
 }
 
 @import "./basics.css";

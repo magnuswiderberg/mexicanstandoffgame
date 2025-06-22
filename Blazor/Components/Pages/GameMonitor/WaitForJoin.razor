@@ -12,11 +12,14 @@
     <div class="mt-10 text-lg uppercase">Game ID: @Game.Id</div>
     <img src="data:image/png;base64,@_qrCodeImageAsBase64" class="mt-1 max-w-[20rem] border-8 border-neutral-700" alt="QR code" />
 
-    <blockquote class="absolute -right-[12rem] -top-[1rem] mx-auto hidden md:block">
-        <div class="bubble left text-3xl">
-            Join!
-        </div>
-    </blockquote>
+    @if (Game.Players.Count < Game.Rules.MinimumPlayerCount)
+    {
+        <blockquote class="absolute -right-[12rem] -top-[1rem] hidden md:block">
+            <div class="bubble left comic text-3xl">
+                Join!
+            </div>
+        </blockquote>
+    }
 
     <div class="mt-2">
         <a href="@_gameUrl">@_gameUrl</a>
@@ -42,8 +45,8 @@
     {
         <button class="button large mt-8 cursor-pointer" @onclick="StartGameAsync">Start game</button>
 
-        <blockquote class="absolute -left-[10rem] bottom-[4rem] mx-auto hidden md:block">
-            <div class="bubble right text-3xl">
+        <blockquote class="absolute -left-[10rem] bottom-[4rem] hidden md:block">
+            <div class="bubble right comic text-3xl">
                 Start<br />game!
             </div>
         </blockquote>

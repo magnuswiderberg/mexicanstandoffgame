@@ -1,4 +1,4 @@
-body {
+﻿body {
     @apply bg-zinc-100;
 }
 
@@ -15,7 +15,7 @@ h1 {
 a {
     color: var(--major-text-fg);
     border-bottom-color: var(--major-text-fg);
-    @apply border-b border-dashed pb-[1px] px-1;
+    @apply border-b border-dashed px-1 pb-[1px];
     @apply hover:border-solid;
 }
 
@@ -24,15 +24,22 @@ a {
     @apply bg-orange-100 px-10 py-3 font-semibold;
     @apply rounded-full;
     @apply border border-solid border-amber-900 shadow-lg shadow-amber-900/40;
-    @apply hover:bg-amber-900 hover:text-orange-100 hover:border-transparent;
+    @apply cursor-pointer hover:border-transparent hover:bg-amber-900 hover:text-orange-100;
 
     &.large {
         @apply text-2xl;
     }
 
     &.neutral {
-        @apply bg-white;
-        @apply hover:bg-amber-900 hover:text-orange-100;
+        @apply bg-white text-slate-700;
+        @apply border-slate-500 shadow-md;
+    }
+
+    &.tutorial {
+        @apply bg-white text-slate-700;
+        @apply border-slate-700 shadow-sm;
+        @apply hover:bg-slate-100 hover:text-slate-800;
+        @apply rounded-xl px-5 py-2;
     }
 
     &.in-menu {
@@ -42,5 +49,5 @@ a {
 
 input[type="text"],
 input[type="number"] {
-    @apply border-2 border-gray-300 rounded-md p-2;
+    @apply rounded-md border-2 border-gray-300 p-2;
 }

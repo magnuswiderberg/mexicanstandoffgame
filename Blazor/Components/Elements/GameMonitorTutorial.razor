@@ -1,0 +1,52 @@
+﻿@code {
+    [Parameter]
+    public string PositionClasses { get; set; } = null!;
+
+    [Parameter]
+    public int Step { get; set; }
+
+    [Parameter]
+    public int Total { get; set; } = 8;
+
+    [Parameter]
+    public string Direction { get; set; } = null!; // "left" or "right"
+
+    [Parameter]
+    public string Text { get; set; } = null!;
+
+    [Parameter]
+    public Func<int, Task> ChangeStepAction { get; set; } = null!;
+
+    [Parameter]
+    public Func<int, Task> EndAction { get; set; } = null!;
+}
+
+<blockquote class="absolute hidden md:block @PositionClasses">
+    <div class="bubble @Direction tutorial">
+        <span class="font-semibold">Tutorial @Step&thinsp;/&thinsp;@Total</span><br />
+        @Text
+        <div class="-mx-[1rem] -mb-[0.5rem] mt-4 flex justify-between text-sm">
+            <button class="button tutorial" @onclick="() => EndAction(Step)" title="Skip tutorial">
+                @if (Step < Total)
+                {
+                    <span class="text-slate-500">Skip</span>
+                }
+                else
+                {
+                    <span>Finish</span>
+                }
+            </button>
+
+            <div class="flex gap-3">
+                @if (Step > 1)
+                {
+                    <button class="button tutorial" @onclick="() => ChangeStepAction(Step - 1)" title="Previous">&lt;</button>
+                }
+                @if (Step < Total)
+                {
+                    <button class="button tutorial" @onclick="() => ChangeStepAction(Step + 1)" title="Next">&gt;</button>
+                }
+            </div>
+        </div>
+    </div>
+</blockquote>

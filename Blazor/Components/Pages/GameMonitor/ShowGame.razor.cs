@@ -3,6 +3,7 @@ using Blazor.Components.Elements;
 using Game.Bots;
 using Game.Model;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Shared.GameEvents;
@@ -14,6 +15,7 @@ public partial class ShowGame
 {
     [Inject] public NavigationManager NavigationManager { get; set; } = null!;
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+    [Inject] public ProtectedLocalStorage ProtectedLocalStorage { get; set; } = null!;
 
     private List<AggregatedRoundAction> _aggregatedRoundResult = new();
 
@@ -21,6 +23,20 @@ public partial class ShowGame
     private string? _appearClassName;
     private ConfirmDialog _confirmDialog = null!;
 
+    private int? _tutorialStep;
+
+
+    private const string TutorialDoneKey = "gamemonitor_tutorial_done";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var tutorialDoneValueTask = await ProtectedLocalStorage.GetAsync<bool>(TutorialDoneKey);
+        if (tutorialDoneValueTask.Success) _tutorialStep = tutorialDoneValueTask.Value ? null : 1;
+        else _tutorialStep = 1;
+        await InvokeAsync(StateHasChanged);
+    }
 
     public async Task RoundResultsCompletedAsync()
     {
@@ -53,6 +69,11 @@ public partial class ShowGame
             }
         }
 
+        if (_tutorialStep == 6)
+        {
+            _tutorialStep = 7;
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -76,6 +97,7 @@ public partial class ShowGame
 
             await Game.SetRoundCompletedAsync();
             await HubConnection.InvokeAsync(IGameEvents.RevealDoneMethod, Game.Id, Game.State);
+            await EndTutorial(0);
         }
         else if (_revealingRoundResultIndex.HasValue)
         {
@@ -154,5 +176,25 @@ public partial class ShowGame
             if (remove != true) return;
             await Game.RemovePlayerAsync(player);
         });
+    }
+
+    private async Task ChangeTutorialStep(int nextStep)
+    {
+        _tutorialStep = nextStep;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EndTutorial(int _)
+    {
+        await ProtectedLocalStorage.SetAsync(TutorialDoneKey, true);
+        _tutorialStep = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ActivateTutorial()
+    {
+        await ProtectedLocalStorage.DeleteAsync(TutorialDoneKey);
+        _tutorialStep = 1;
+        await InvokeAsync(StateHasChanged);
     }
 }
