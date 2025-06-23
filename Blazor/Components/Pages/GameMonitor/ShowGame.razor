@@ -39,7 +39,7 @@
             
             @if (_tutorialStep == 7)
             {
-                <GameMonitorTutorial Step="7" Direction="left" PositionClasses="bottom-[8rem] left-[24rem] w-[18rem]"
+                <GameMonitorTutorial Step="7" Direction="left" PositionClasses="bottom-[8rem] left-[28rem] w-[18rem]"
                                      Text="The ACTIONS that each player selected are revealed."
                                      ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
             }
@@ -70,8 +70,8 @@
                 @foreach (var player in result.TargetPlayers)
                 {
                     <div class="flex items-center gap-2">
-                        <GameCharacter Player="@player" />
-                        <span class="uppercase">@player.Name</span>
+                        <GameCharacter Player="@player" Size="large" />
+                        <span class="text-xl uppercase">@player.Name</span>
                     </div>
                 }
             </div>
@@ -91,6 +91,12 @@
                     <i class="bullet card-size"></i>
                     break;
             }
+            
+            @* TODO: End - maybe show more than "Goof work"? *@
+
+            @* TODO: If money was distributed, show it *@
+            @* TODO: From chest: some animation or at least show a big coin *@
+            @* TODO: From shooting: some animation or at least show a big coin(s) for each player *@
         </div>
 
         <button class="button" @onclick="RevealNextAsync">@RevealNextText()</button>
@@ -140,7 +146,7 @@
                         <th>Bullets</th>
                         @if (Game.State == GameState.Playing)
                         {
-                            <th>Trend</th>
+                            @* <th>Trend</th> *@
                             <th>Ready?</th>
                         }
                         @if (Game.State == GameState.Ended)
@@ -173,7 +179,7 @@
 
                             @if (Game.State == GameState.Playing)
                             {
-                                <td><PlayerTrend Player="@player" /></td>
+                                @* <td><PlayerTrend Player="@player" /></td> *@
                                 <td>
                                     @if (player.Alive)
                                     {
@@ -226,7 +232,7 @@
     </div>
 </div>
 
-@if (_tutorialStep == null)
+@if (_tutorialStep == null && Game.State == GameState.Playing)
 {
     <div class="fixed bottom-3">
         <button class="button neutral" @onclick="ActivateTutorial">Tutorial</button>
