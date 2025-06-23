@@ -347,10 +347,12 @@ public partial class Game
         foreach (var dodger in dodgersWithoutShooter)
         {
             var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == dodger.Source.Id);
-            if (targetPlayer == null) continue;
-            var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
-            if (hasAttacker) continue;
-            dodgers.Add(targetPlayer);
+            if (targetPlayer != null)
+            {
+                var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+                if (hasAttacker) continue;
+                dodgers.Add(targetPlayer);
+            }
         }
         if (dodgers.Count != 0)
         {
