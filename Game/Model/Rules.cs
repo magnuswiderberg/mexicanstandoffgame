@@ -7,8 +7,8 @@ public class Rules
 
     public int CoinsToWin { get; set; } = 3;
     public int ShotsToDie { get; set; } = 2;
-    public int MaxBullets { get; set; } = 6;
-        
+    public int MaxBullets { get; set; } = 2;
+
     public int SelectCardTimeoutSeconds { get; set; }
 
     public IReadOnlyDictionary<int, int> ChestsPerPlayerCount { get; set; } = new Dictionary<int, int>

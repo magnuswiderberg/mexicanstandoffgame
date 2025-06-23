@@ -54,6 +54,7 @@ npm install tailwindcss @tailwindcss/cli
 - support for bring your own bot + example bots
 - Countdown time
 - Support for saving rule-sets in local storage
+- Maybe: Bar to go and get life; one at the time? cost a coin?
 
 ### Play.razor
 

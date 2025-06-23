@@ -4,7 +4,6 @@ using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Game.Repository;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Microsoft.AspNetCore.Components.Web;
 using Shared.Cards;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -35,14 +34,39 @@ public partial class Play : IAsyncDisposable
     private bool _initializing = true;
     private HubConnection? _hubConnection;
     private bool _lastRevealDone;
-    
+
     private bool _showMenu;
     private ConfirmDialog _confirmDialog = null!;
+
+    private int _secondsLeft;
+    private Timer? _timer;
+    //private PeriodicTimer _timer = null!;
+    private bool _firstTimerStarted;
+
 
     protected override async Task OnInitializedAsync()
     {
         _game = GameRepository.GetGame(GameId);
         if (_game == null) return;
+
+        //_timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        _timer = new Timer(_ =>
+        {
+            if (_game.State != GameState.Playing) return;
+            if (_secondsLeft > 0) InvokeAsync(StateHasChanged);
+            else
+            {
+                StopTimer();
+                if (_player is { SelectedCard: null })
+                {
+                    // TODO: sometimes does not trigger game monitor
+                    _player.SetSelectedCardAsync(Card.Dodge).Wait();
+                    InvokeAsync(StateHasChanged);
+                }
+            }
+            _secondsLeft--;
+            if (_secondsLeft < 0) _secondsLeft = 0;
+        });
 
         _waitingForMonitor = false;
         await InitializeHubAsync();
@@ -88,16 +112,17 @@ public partial class Play : IAsyncDisposable
         _hubConnection.On(IGameEvents.EventNames.RoundCompleted, async () =>
         {
             //_waitingForMonitor = false;
-            if (_player == null) return;
             //await _player.SetSelectedCardAsync(null);
-            _player.ResetCards();
-            // TODO StartTimer();
             //await SetAppearClassNameDelayed();
             await InvokeAsync(StateHasChanged);
         });
 
         _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async (gameStateWhenRevealed) =>
         {
+            if (_player == null) return;
+            _player.ResetCards();
+            StartTimer();
+
             // TODO: _lastRevealDone is set too early
             if (gameStateWhenRevealed == GameState.Ended) _lastRevealDone = true;
             _waitingForMonitor = false;
@@ -137,6 +162,23 @@ public partial class Play : IAsyncDisposable
         _initializing = false;
         await InvokeAsync(StateHasChanged);
     }
+
+    private void StartTimer()
+    {
+        if (_game == null || _timer == null) return;
+        if (_game.Rules.SelectCardTimeoutSeconds < 1) return;
+        if (_game.State != GameState.Playing) return;
+
+        _secondsLeft = _game.Rules.SelectCardTimeoutSeconds;
+        _timer.Change(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(1));
+    }
+
+    private void StopTimer()
+    {
+        _secondsLeft = 0;
+        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+    }
+
 
     private async Task JoinGameAsync()
     {
@@ -191,19 +233,19 @@ public partial class Play : IAsyncDisposable
     private async Task GameStateChangedAsync()
     {
         if (_game == null || _player == null) return;
-        if (_game.State == GameState.Created)
+        if (_game.State == GameState.Playing)
         {
-            // TODO: Should not do this auto, right?
-            //await AddPlayerAsync();
+            if (_firstTimerStarted == false)
+            {
+                _firstTimerStarted = true;
+                StartTimer();
+            }
+        }
+        else
+        {
+            _firstTimerStarted = false;
         }
         await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task Quit()
-    {
-        if (_game == null || _player == null) return;
-
-        await _game.RemovePlayerAsync(_player);
     }
 
     private bool IsSelected(Card card)
@@ -232,6 +274,7 @@ public partial class Play : IAsyncDisposable
         if (_player == null) return;
 
         await _player.SetSelectedCardAsync(card);
+        StopTimer();
     }
 
     //private async Task TryRejoin()
@@ -268,6 +311,7 @@ public partial class Play : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         if (_hubConnection is not null) await _hubConnection.DisposeAsync();
+        if (_timer != null) await _timer.DisposeAsync();
     }
 
     private const int MaxPlayerNameLength = 16;
@@ -307,7 +351,7 @@ public partial class Play : IAsyncDisposable
             }
         });
     }
-    
+
     private async Task HideMenuAsync()
     {
         _showMenu = false;

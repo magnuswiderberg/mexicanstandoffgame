@@ -18,6 +18,12 @@ public partial class CustomRules
 
     protected void CreateCustomizedGame()
     {
+        if (_maxOnChest < 1) _maxOnChest = 1;
+        if (_rules.ShotsToDie < 1) _rules.ShotsToDie = 1;
+        if (_rules.CoinsToWin < 1) _rules.CoinsToWin = 1;
+        if (_rules.MaxBullets < 1) _rules.MaxBullets = 1;
+        if (_rules.SelectCardTimeoutSeconds < 1) _rules.SelectCardTimeoutSeconds = 0;
+
         var chestsPerPlayerCount = new Dictionary<int, int>();
         for (var playerCount = 0; playerCount <= MaxPlayers; playerCount++)
         {
@@ -25,7 +31,7 @@ public partial class CustomRules
         }
 
         _rules.ChestsPerPlayerCount = chestsPerPlayerCount;
-        
+
         var game = GameRepository.CreateGame(GameEvents, _rules);
         NavigationManager.NavigateTo($"game-monitor/{game.Id}");
     }

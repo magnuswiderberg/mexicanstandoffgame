@@ -22,6 +22,7 @@
     --color-slate-700: oklch(37.2% 0.044 257.287);
     --color-slate-800: oklch(27.9% 0.041 260.031);
     --color-gray-300: oklch(87.2% 0.01 258.338);
+    --color-gray-600: oklch(44.6% 0.03 256.802);
     --color-zinc-100: oklch(96.7% 0.001 286.375);
     --color-zinc-300: oklch(87.1% 0.006 286.286);
     --color-neutral-300: oklch(87% 0 0);
@@ -44,6 +45,7 @@
     --text-3xl--line-height: calc(2.25 / 1.875);
     --text-5xl: 3rem;
     --text-5xl--line-height: 1;
+    --font-weight-thin: 100;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     --radius-md: 0.375rem;
@@ -567,6 +569,13 @@
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
   }
+  .font-thin {
+    --tw-font-weight: var(--font-weight-thin);
+    font-weight: var(--font-weight-thin);
+  }
+  .text-nowrap {
+    text-wrap: nowrap;
+  }
   .text-slate-500 {
     color: var(--color-slate-500);
   }
@@ -950,22 +959,35 @@ input[type="text"], input[type="number"] {
   height: 3.2rem;
 }
 #custom-rules {
+  width: 100%;
   table-layout: auto;
   td {
-    padding: calc(var(--spacing) * 1);
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2);
     text-align: left;
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
     --tw-border-style: solid;
     border-style: solid;
     border-color: var(--color-zinc-300);
+    background-color: var(--color-white);
     &:first-child {
-      text-align: right;
+      text-align: left;
     }
+  }
+  tr:last-child td {
+    --tw-border-style: none;
+    border-style: none;
   }
   input {
     width: calc(var(--spacing) * 16);
     text-align: center;
+  }
+  div.info {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--color-gray-600);
+    margin-top: calc(var(--spacing) * 2);
   }
 }
 #game-monitor-game-state {

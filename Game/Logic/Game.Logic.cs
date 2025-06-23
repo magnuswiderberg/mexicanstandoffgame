@@ -73,7 +73,7 @@ public partial class Game
         var diffInitializer = AlivePlayers.ToDictionary(p => p.Id, _ => 0);
         var coinsDiff = new Dictionary<string, int>(diffInitializer);
         var shotsDiff = new Dictionary<string, int>();
-        var shotBy = new Dictionary<string, List<Player>>(AlivePlayers.ToDictionary(p => p.Id, _ => new List<Player>()));
+        var shotBy = new Dictionary<string, List<Player>>(Players.ToDictionary(p => p.Id, _ => new List<Player>()));
         var bulletsDiff = new Dictionary<string, int>(diffInitializer);
         var result = new Dictionary<string, bool>();
         var actions = new List<RoundAction>();
@@ -100,26 +100,6 @@ public partial class Game
                 if (!shotsDiff.TryAdd(attackedPlayer.Id, 1)) shotsDiff[attackedPlayer.Id]++;
                 result[player.Id] = true;
                 shotBy[attackedPlayer.Id].Add(player);
-                // TODO: Exception on "shotBy[attackedPlayer].Add(player);"
-                /*
-                 The given key 'mrrandom [$0|S=1|B=0|(-)]' was not present in the dictionary.
-                   
-                      at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
-                   
-                      at Game.Logic.Game.CompleteRound() in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.Logic.cs:line 98
-                   
-                      at Game.Logic.Game.PlayerCardChangedAsync(Player player) in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.Logic.cs:line 42
-                   
-                      at Game.Logic.Game.<>c__DisplayClass28_0.<<AddPlayerAsync>b__0>d.MoveNext() in D:\privat\github\mexicanstandoffgame\Game\Logic\Game.cs:line 48
-                   
-                   --- End of stack trace from previous location ---
-                   
-                      at Game.Model.Player.SetSelectedCardAsync(Card card) in D:\privat\github\mexicanstandoffgame\Game\Model\Player.cs:line 58
-                   
-                      at Blazor.Components.Pages.Play.CardClicked(Card card)
-                   
-                      at Microsoft.AspNetCore.Components.ComponentBase.CallStateHasChangedOnAsyncCompletion(Task task)
-                 */
             }
             else
             {
@@ -202,7 +182,7 @@ public partial class Game
             player.Bullets += bullets;
             if (player.Shots >= Rules.ShotsToDie) player.SetDead();
         }
-        foreach (var (playerId, bullets) in bulletsDiff)
+        foreach (var (playerId, _) in bulletsDiff)
         {
             var player = Players.First(x => x.Id == playerId);
             if (!player.Alive)
@@ -349,7 +329,7 @@ public partial class Game
             var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == dodger.Source.Id);
             if (targetPlayer != null)
             {
-                var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+                var hasAttacker = attackerActions.Exists(a => a.Successful && a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
                 if (hasAttacker) continue;
                 dodgers.Add(targetPlayer);
             }

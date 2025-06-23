@@ -21,7 +21,8 @@
         </h2>
         <h2>
             @Game.Rules.CoinsToWin @(Game.Rules.CoinsToWin == 1 ? "coin" : "coins") to win,
-            max @Game.Rules.ChestsPerPlayerCount[Game.Players.Count] on chest
+            max @Game.Rules.ChestsPerPlayerCount[Game.Players.Count] on chest,
+            max @Game.Rules.MaxBullets bullets in gun
         </h2>
 
         @if (_tutorialStep == 1)
@@ -36,7 +37,7 @@
     {
         var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
         <div class="relative my-10 flex items-center gap-5 rounded-xl bg-white p-10 @_appearClassName">
-            
+
             @if (_tutorialStep == 7)
             {
                 <GameMonitorTutorial Step="7" Direction="left" PositionClasses="-right-[17rem] -top-[12rem] w-[18rem]"
@@ -91,7 +92,7 @@
                     <i class="bullet card-size"></i>
                     break;
             }
-            
+
             @* TODO: End - maybe show more than "Good work"? *@
             @* TODO: Remember all winners? Show them when a game ends *@
 
@@ -140,81 +141,81 @@
             <div class="mt-10 flex flex-col items-center rounded-xl bg-white p-4 text-sm shadow-lg md:text-lg lg:text-xl">
                 <table id="game-monitor-game-state">
                     <thead>
-                    <tr>
-                        <th class="text-left">Player</th>
-                        <th>Life</th>
-                        <th>Gold</th>
-                        <th>Bullets</th>
-                        @if (Game.State == GameState.Playing)
-                        {
-                            @* <th>Trend</th> *@
-                            <th>Ready?</th>
-                        }
-                        @if (Game.State == GameState.Ended)
-                        {
-                            <th>Result</th>
-                        }
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var player in Game.Players)
-                    {
-                        <tr class="@(player.Winner ? "winner" : "")">
-                            <td class="flex items-center justify-start gap-3 @(player.Alive ? "" : "line-through")" @ondblclick="async () => await RemovePlayerAsync(player)">
-
-                                <GameCharacter Player="@player" />
-
-                                <span class="uppercase">
-                                    @player.Name
-                                    @if (player is BotPlayer)
-                                    {
-                                        <br />
-                                        <span>(bot)</span>
-                                    }
-                                </span>
-                            </td>
-
-                            <td><PlayerHealth Player="player" Rules="Game.Rules" /></td>
-                            <td><PlayerCoins Player="player" /></td>
-                            <td><PlayerBullets Player="player" /></td>
-
+                        <tr>
+                            <th class="text-left">Player</th>
+                            <th>Life</th>
+                            <th>Gold</th>
+                            <th>Bullets</th>
                             @if (Game.State == GameState.Playing)
                             {
-                                @* <td><PlayerTrend Player="@player" /></td> *@
-                                <td>
-                                    @if (player.Alive)
-                                    {
-                                        @if (player.SelectedCard == null)
-                                        {
-                                            <WaitingAnimation />
-                                        }
-                                        else
-                                        {
-                                            <span>✔️</span>
-                                        }
-                                    }
-                                </td>
+                                @* <th>Trend</th> *@
+                                <th>Ready?</th>
                             }
-                            else if (Game.State == GameState.Ended)
+                            @if (Game.State == GameState.Ended)
                             {
-                                <td class="relative">
-                                    @if (player.Winner)
-                                    {
-                                        <span class="text-3xl">🏆</span>
-                                        <blockquote class="absolute -right-[13rem] bottom-[5rem] hidden md:block">
-                                            <div class="bubble left comic text-3xl">
-                                                    Good<br/>work!
-                                            </div>
-                                        </blockquote>
-                                    }
-                                    else if (Game.Winners.Count == 0)
-                                    {
-                                        <i class="text-sm">No winner&hellip;</i>
-                                    }
-                                </td>
+                                <th>Result</th>
                             }
                         </tr>
-                    }
+                    </thead>
+                    <tbody>
+                        @foreach (var player in Game.Players)
+                        {
+                            <tr class="@(player.Winner ? "winner" : "")">
+                                <td class="flex items-center justify-start gap-3 @(player.Alive ? "" : "line-through")" @ondblclick="async () => await RemovePlayerAsync(player)">
+
+                                    <GameCharacter Player="@player" />
+
+                                    <span class="uppercase">
+                                        @player.Name
+                                        @if (player is BotPlayer)
+                                        {
+                                            <br />
+                                            <span>(bot)</span>
+                                        }
+                                    </span>
+                                </td>
+
+                                <td><PlayerHealth Player="player" Rules="Game.Rules" /></td>
+                                <td><PlayerCoins Player="player" /></td>
+                                <td><PlayerBullets Player="player" /></td>
+
+                                @if (Game.State == GameState.Playing)
+                                {
+                                    @* <td><PlayerTrend Player="@player" /></td> *@
+                                    <td>
+                                        @if (player.Alive)
+                                        {
+                                            @if (player.SelectedCard == null)
+                                            {
+                                                <WaitingAnimation />
+                                            }
+                                            else
+                                            {
+                                                <span>✔️</span>
+                                            }
+                                        }
+                                    </td>
+                                }
+                                else if (Game.State == GameState.Ended)
+                                {
+                                    <td class="relative">
+                                        @if (player.Winner)
+                                        {
+                                            <span class="text-3xl">🏆</span>
+                                            <blockquote class="absolute -right-[13rem] bottom-[5rem] hidden md:block">
+                                                <div class="bubble left comic text-3xl">
+                                                    Good<br />work!
+                                                </div>
+                                            </blockquote>
+                                        }
+                                        else if (Game.Winners.Count == 0)
+                                        {
+                                            <i class="text-sm">No winner&hellip;</i>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -236,6 +237,6 @@
 @if (_tutorialStep == null && Game.State == GameState.Playing)
 {
     <div class="fixed bottom-3">
-        <button class="button neutral" @onclick="ActivateTutorial">Tutorial</button>
+        <a @onclick="ActivateTutorial" class="cursor-pointer">Tutorial</a>
     </div>
 }

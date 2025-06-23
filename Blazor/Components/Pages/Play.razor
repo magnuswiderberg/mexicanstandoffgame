@@ -8,17 +8,17 @@
 }
 
 <div class="-mx-[0.8rem] -mt-[0.8rem] flex items-center justify-end sm:-mx-0 sm:-mt-0">
-    <img src="img/menu.svg" class="w-4 h-4 cursor-pointer" @onclick="ToggleMenuAsync" />
+    <img src="img/menu.svg" class="h-4 w-4 cursor-pointer" @onclick="ToggleMenuAsync" />
 </div>
 
-<div class="mt-5 mx-auto flex max-w-2xl flex-col items-center">
+<div class="mx-auto mt-5 flex max-w-2xl flex-col items-center">
 
-    <div class="mb-6 gap-5 flex items-center justify-center">
+    <div class="mb-6 flex items-center justify-center gap-5">
         @if (_player != null)
         {
             <GameCharacter Player="_player" Size="large" />
         }
-        <div class="gap-2 flex flex-col items-center">
+        <div class="flex flex-col items-center gap-2">
             <h1>Mexican Standoff</h1>
             <span class="text-lg uppercase">@_player?.Name</span>
         </div>
@@ -26,40 +26,40 @@
 
     @if (_initializing)
     {
-        <div class="mt-10 gap-6 flex flex-col items-center text-lg">
+        <div class="mt-10 flex flex-col items-center gap-6 text-lg">
             Initializing game&hellip;
             <WaitingAnimation />
         </div>
     }
     else if (_showMenu)
     {
-        <div class="px-10 py-6 bg-white border-amber-600 gap-5 flex flex-col items-center rounded-lg border-2 shadow-xl">
+        <div class="flex flex-col items-center gap-5 rounded-lg border-2 border-amber-600 bg-white px-10 py-6 shadow-xl">
             @if (_game != null && _player != null)
             {
                 <div class="uppercase">
                     Game ID: @_game.Id
                 </div>
                 <div>
-                    <PlayerHealth Player="_player" Rules="_game.Rules"/>
-                    <PlayerCoins Player="_player"/>
-                    <PlayerBullets Player="_player"/>
+                    <PlayerHealth Player="_player" Rules="_game.Rules" />
+                    <PlayerCoins Player="_player" />
+                    <PlayerBullets Player="_player" />
                 </div>
                 @if (_player.SuccessTrend(1).Any())
                 {
                     <div>
-                        Action trend: <PlayerTrend Player="@_player"/>
+                        Action trend: <PlayerTrend Player="@_player" />
                     </div>
                 }
 
-                <button class="mt-5 button in-menu" @onclick="MaybeQuit">Quit game</button>
-                <ConfirmDialog @ref="_confirmDialog"/>
+                <button class="button in-menu mt-5" @onclick="MaybeQuit">Quit game</button>
+                <ConfirmDialog @ref="_confirmDialog" />
             }
             else
             {
                 <button class="button in-menu" @onclick='() => NavigationManager.NavigateTo("/")'>To start page</button>
             }
         </div>
-        <button class="mt-6 button neutral in-menu" @onclick="HideMenuAsync">✖️ Close menu</button>
+        <button class="button neutral in-menu mt-6" @onclick="HideMenuAsync">✖️ Close menu</button>
     }
     else if (_game == null)
     {
@@ -89,12 +89,12 @@
     {
         <h2 class="mt-5 uppercase">Game ID: @_game.Id</h2>
 
-        <div class="mt-10 gap-3 bg-white p-5 flex flex-col items-center rounded-lg shadow-lg">
-            Nickname
+        <div class="mt-10 flex flex-col items-center gap-3 rounded-lg bg-white p-5 shadow-lg">
+            Your nickname
             <input type="text" @bind="@_playerName" size="15" maxlength="@MaxPlayerNameLength" class="text-center" />
             <img src="img/randomize.svg" class="w-[30px] cursor-pointer" title="Generate another nickname" @onclick="RandomizeNickname" />
         </div>
-        <button class="mt-10 button large" @onclick="JoinGameAsync">Join the game!</button>
+        <button class="button large mt-10" @onclick="JoinGameAsync">Join the game!</button>
         <div class="mt-10">@_playerNameInfo</div>
 
     }
@@ -102,11 +102,11 @@
     {
         <div class="mt-6 text-lg">Joining game <span class="uppercase">@_game.Id</span>.</div>
         <div class="mt-3">Players so far:</div>
-        <div class="mt-3 bg-white p-5 flex flex-col items-center rounded-lg shadow-lg">
-            <div class="gap-3 flex flex-col items-center">
+        <div class="mt-3 flex flex-col items-center rounded-lg bg-white p-5 shadow-lg">
+            <div class="flex flex-col items-center gap-3">
                 @foreach (var player in _game.Players)
                 {
-                    <div class="gap-5 flex w-full">
+                    <div class="flex w-full gap-5">
                         <GameCharacter Player="player" Size="small" />
                         <span>
                             @player.Name
@@ -127,7 +127,7 @@
         @* TODO: make QUIT a new Player state *@
         if (_waitingForMonitor)
         {
-            <div class="mt-10 p-5 bg-white rounded-lg shadow-lg">
+            <div class="mt-10 rounded-lg bg-white p-5 shadow-lg">
                 Watch the monitor for round results!
             </div>
         }
@@ -142,11 +142,7 @@
         {
             <h2 class="mt-4">Select a card to play in round @_game.Rounds:</h2>
 
-            @* @if (SecondsLeft != 0)
-                    {
-                        <text>in  @SecondsLeft s</text>
-                    } *@
-            <div class="mt-10 gap-5 flex flex-col">
+            <div class="mt-10 flex flex-col gap-5">
                 <div class="selectable-cards">
 
                     @foreach (var card in _game.PlayableCards(_player))
@@ -180,6 +176,11 @@
                     <button class="button neutral" @onclick="() => CardClicked(null)">De-select</button>
                 }
             </div>
+
+            @if (_secondsLeft != 0)
+            {
+                <div class="mt-10 text-2xl font-thin">Time left: @_secondsLeft s</div>
+            }
         }
     }
     else if (_game.State is GameState.Ended)
@@ -188,7 +189,7 @@
             <img src="img/signature-villans.png" class="max-w-[100px]" />
         </div>
 
-        <div class="mt-10 bg-white p-5 flex flex-col items-center rounded-lg text-lg">
+        <div class="mt-10 flex flex-col items-center rounded-lg bg-white p-5 text-lg">
             <h2 class="text-xl font-semibold uppercase">Game over</h2>
 
             @if (_player.Winner)
@@ -215,7 +216,7 @@
             }
         </div>
 
-        @* <button class="mt-10 button" @onclick="TryRejoin">Rejoin</button>
+        @* <button class="button mt-10" @onclick="TryRejoin">Rejoin</button>
 
         @if (_rejoinStatus != null)
         {

@@ -148,13 +148,12 @@ public partial class ShowGame
             {
                 if (result.Successful)
                 {
-                    await JsRuntime.InvokeVoidAsync("playSound", "sound-chest");
+                    await JsRuntime.InvokeVoidAsync("playSound", "sound-coin");
                 }
                 else
                 {
                     await JsRuntime.InvokeVoidAsync("playSound", "sound-missed-chest");
                 }
-                await JsRuntime.InvokeVoidAsync("playSound", "sound-coin");
                 await Task.Delay(200);
             }
         }
@@ -163,7 +162,7 @@ public partial class ShowGame
             for (var i = 0; i < result.TargetPlayers.Count; i++)
             {
                 await JsRuntime.InvokeVoidAsync("playSound", "sound-load");
-                await Task.Delay(200);
+                await Task.Delay(300);
             }
         }
     }
