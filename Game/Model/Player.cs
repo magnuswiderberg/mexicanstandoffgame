@@ -1,4 +1,5 @@
-﻿using Common.Cards;
+﻿using System.Text.Json.Serialization;
+using Common.Cards;
 
 namespace Game.Model
 {
@@ -17,6 +18,7 @@ namespace Game.Model
         public int Shots { get; set; }
         public int Bullets { get; set; }
 
+        [JsonIgnore]
         public Func<Player, Task>? CardChanged { get; set; }
 
         private bool _locked;

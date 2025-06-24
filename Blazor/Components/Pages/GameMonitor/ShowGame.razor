@@ -1,4 +1,5 @@
-﻿@using Common.Model
+﻿@using System.Text.Json
+@using Common.Model
 @using Game.Bots
 @using Game.Logic
 @using Microsoft.AspNetCore.SignalR.Client
@@ -81,6 +82,10 @@
                 @switch (result.Type)
                 {
                     case RoundActionType.Dodge:
+                        @if (result.Attackers != null)
+                        {
+                            <text>who </text>
+                        }
                         <text>@(result.TargetPlayers.Count == 1 ? "dodges" : "dodge")</text>
                         <i class="dodge monitor-size"></i>
                         break;
@@ -93,13 +98,6 @@
                         <i class="load monitor-size"></i>
                         break;
                 }
-
-                @* TODO: End - maybe show more than "Good work"? *@
-                @* TODO: Remember all winners? Show them when a game ends *@
-
-                @* TODO: If money was distributed, show it *@
-                @* TODO: From chest: some animation or at least show a big coin *@
-                @* TODO: From shooting: some animation or at least show a big coin(s) for each player *@
             </div>
 
             @if (result.Type == RoundActionType.Attack)
@@ -110,7 +108,10 @@
             }
         </div>
 
-        <button class="button" @onclick="RevealNextAsync">@RevealNextText()</button>
+        @if (!_revealButtonDisabled)
+        {
+            <button class="button" @onclick="RevealNextAsync">@RevealNextText()</button>
+        }
     }
     else
     {
@@ -244,6 +245,11 @@
 @if (_tutorialStep == null && Game.State == GameState.Playing)
 {
     <div class="fixed bottom-3 flex gap-10">
+        <label class="flex cursor-pointer items-center gap-1 text-neutral-500">
+            <input class="toggle" type="checkbox" @bind="@_useSpeech" @bind:after="UseSpeechToggled" />
+            <span></span>
+            Speech is @(_useSpeech ? "on" : "off")
+        </label>
         <a @onclick="ActivateTutorial" class="cursor-pointer">Tutorial</a>
         <a @onclick="MaybeQuitAsync" class="cursor-pointer">Quit</a>
     </div>

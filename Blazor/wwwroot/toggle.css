@@ -1,0 +1,50 @@
+/*
+Use like
+
+<label class="flex cursor-pointer items-center gap-1">
+    <input class="toggle" type="checkbox" @bind-value="@_x" />
+    <span></span>
+    Speech is @(_x ? "on" : "off")
+</label>
+*/
+
+input[type=checkbox].toggle {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+}
+
+input.toggle+span {
+    cursor: pointer;
+    width: 45px;
+    height: 30px;
+    border-radius: 30px;
+    @apply bg-stone-400;
+    display: block;
+    position: relative;
+}
+
+input.toggle+span:after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 24px;
+    background: #fff;
+    transition: 0.3s;
+}
+
+input.toggle:checked+span {
+    @apply bg-lime-700;
+}
+
+input.toggle:checked+span:after {
+    left: calc(100% - 3px);
+    transform: translateX(-100%);
+}
+
+input.toggle+span:active:after {
+    width: 37px;
+}
