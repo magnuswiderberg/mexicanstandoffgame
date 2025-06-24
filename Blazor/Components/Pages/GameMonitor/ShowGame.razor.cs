@@ -1,13 +1,13 @@
 ﻿using System.Net;
 using Blazor.Components.Elements;
+using Common.GameEvents;
+using Common.Model;
 using Game.Bots;
 using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
-using Shared.GameEvents;
-using Shared.Model;
 
 namespace Blazor.Components.Pages.GameMonitor;
 
@@ -17,7 +17,7 @@ public partial class ShowGame
     [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
     [Inject] public ProtectedLocalStorage ProtectedLocalStorage { get; set; } = null!;
 
-    private List<AggregatedRoundAction> _aggregatedRoundResult = new();
+    private List<AggregatedRoundAction> _aggregatedRoundResult = [];
 
     private int? _revealingRoundResultIndex;
     private string? _appearClassName;

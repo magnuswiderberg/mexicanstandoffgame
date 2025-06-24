@@ -1,9 +1,9 @@
-﻿using Game.Model;
+﻿using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
+using Game.Model;
 using Game.Repository;
 using Moq;
-using Shared.Cards;
-using Shared.GameEvents;
-using Shared.Model;
 using Shouldly;
 
 #pragma warning disable CA2007

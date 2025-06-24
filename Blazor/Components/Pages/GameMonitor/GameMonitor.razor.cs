@@ -1,13 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
 using Game.Bots;
-using Game.Model;
 using Game.Repository;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
-using Shared.Cards;
-using Shared.GameEvents;
-using Shared.Model;
 
 namespace Blazor.Components.Pages.GameMonitor;
 

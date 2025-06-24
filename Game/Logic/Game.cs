@@ -1,7 +1,7 @@
 ﻿using Game.Model;
-using Shared.Cards;
-using Shared.GameEvents;
-using Shared.Model;
+using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
 
 namespace Game.Logic;
 
@@ -13,9 +13,9 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
     public int Rounds { get; private set; } = 1;
 
     public GameState State { get; private set; } = GameState.Created;
-    public IReadOnlyList<Player> Players { get; } = new List<Player>();
+    public IReadOnlyList<Player> Players { get; } = (List<Player>) [];
     public RoundResult LastRound { get; private set; } = new();
-    public IReadOnlyList<Player> Winners { get; } = new List<Player>();
+    public IReadOnlyList<Player> Winners { get; } = (List<Player>) [];
 
     public async Task StartAsync()
     {
@@ -95,6 +95,6 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
 
     public List<Character> AllCharacters()
     {
-        return Players.Select(x => x.Character).ToList();
+        return [.. Players.Select(x => x.Character)];
     }
 }

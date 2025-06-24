@@ -1,7 +1,7 @@
-﻿using Game.Model;
+﻿using Common.GameEvents;
+using Game.Model;
 using Game.Repository;
 using Microsoft.AspNetCore.Components;
-using Shared.GameEvents;
 
 namespace Blazor.Components.Pages;
 

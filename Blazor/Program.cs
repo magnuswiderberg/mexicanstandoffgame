@@ -1,9 +1,8 @@
 using Blazor.Components;
 using Blazor.GameEvents;
+using Common.GameEvents;
 using Game.Repository;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.StaticFiles;
-using Shared.GameEvents;
 
 var builder = WebApplication.CreateBuilder(args);
 

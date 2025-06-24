@@ -1,4 +1,4 @@
-﻿using Shared.Cards;
+﻿using Common.Cards;
 
 namespace Game.Model
 {
@@ -21,7 +21,7 @@ namespace Game.Model
 
         private bool _locked;
 
-        private readonly Dictionary<int, bool> _results = new();
+        private readonly Dictionary<int, bool> _results = [];
 
         public async Task SetSelectedCardAsync(Card? card)
         {
