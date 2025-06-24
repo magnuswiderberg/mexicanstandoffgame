@@ -12,7 +12,14 @@
     <h1>Mexican Standoff</h1>
 
     <div class="mt-6">
-        <img src="img/signature-villans.png" class="max-w-[100px]" />
+        @if (_game?.State == GameState.Playing || _game?.State == GameState.Ended)
+        {
+            <img src="img/standoff.png" class="max-w-[250px] rounded-xl"/>
+        }
+        else
+        {
+            <img src="img/signature-villans.png" class="max-w-[150px]"/>
+        }
     </div>
 
 
