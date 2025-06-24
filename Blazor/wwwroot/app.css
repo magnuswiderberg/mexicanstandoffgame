@@ -1,0 +1,29 @@
+﻿/*
+    NOTE: Best opened in VS Code
+    VS 2022 can't handle @apply
+*/
+
+@import url(https://fonts.googleapis.com/css?family=Permanent+Marker);
+@import "tailwindcss";
+
+@theme {
+    --major-text-fg: var(--color-amber-700);
+
+    --bubble-border-color: var(--color-slate-700);
+    --bubble-text-color: var(--color-slate-700);
+    --bubble-bg: white;
+}
+
+.bubble.tutorial {
+    --bubble-border-color: var(--color-slate-600);
+    --bubble-text-color: var(--color-slate-700);
+    --bubble-bg: var(--color-stone-100);
+}
+
+@import "./basics.css";
+@import "./animations.css";
+@import "./characters.css";
+@import "./cards.css";
+@import "./custom-rules.css";
+@import "./game-state.css";
+@import "./speech-bubble.css";

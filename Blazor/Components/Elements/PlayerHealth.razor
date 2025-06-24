@@ -1,0 +1,23 @@
+﻿@using Game.Model
+
+@code {
+    [Parameter]
+    public Player Player { get; set; } = null!;
+
+    [Parameter]
+    public Rules Rules { get; set; } = null!;
+}
+
+@if (Player.Alive)
+{
+
+    @* @(Game.Rules.ShotsToDie - player.Shots) *@
+    @for (var i = 0; i < Rules.ShotsToDie - Player.Shots; i++)
+    {
+        <span>❤️</span>
+    }
+}
+else
+{
+    <span class="bg-black rounded-lg p-[1px] pb-[3px]">💀</span>
+}

@@ -1,0 +1,26 @@
+#custom-rules {
+    @apply table-auto w-full;
+
+    td {
+        @apply text-left px-3 py-2;
+        @apply border-b border-solid border-zinc-300;
+        @apply bg-white;
+
+        &:first-child {
+            @apply text-left;
+        }
+    }
+
+    tr:last-child td {
+        @apply border-none;
+    }
+
+    input {
+        @apply w-16 text-center;
+    }
+
+    div.info {
+        @apply text-sm text-gray-600;
+        @apply mt-2;
+    }
+}

@@ -1,0 +1,58 @@
+﻿@using Game.Logic
+@using Microsoft.AspNetCore.SignalR.Client
+
+@code
+{
+    [Parameter] public Game Game { get; set; } = null!;
+    [Parameter] public HubConnection HubConnection { get; set; } = null!;
+}
+
+<div class="relative mx-auto flex max-w-2xl flex-col items-center">
+
+    <div class="mt-10 text-lg uppercase">Game ID: @Game.Id</div>
+    <img src="data:image/png;base64,@_qrCodeImageAsBase64" class="mt-1 max-w-[20rem] border-8 border-neutral-700" alt="QR code" />
+
+    @if (Game.Players.Count < Game.Rules.MinimumPlayerCount)
+    {
+        <blockquote class="absolute -right-[12rem] -top-[1rem] hidden md:block">
+            <div class="bubble left comic text-3xl">
+                Join!
+            </div>
+        </blockquote>
+    }
+
+    <div class="mt-2">
+        <a href="@_gameUrl">@_gameUrl</a>
+        <span onclick="copyToClipboard('@_gameUrl')" class="cursor-pointer" title="Copy game link">📋</span>
+    </div>
+
+    <div class="mt-10 flex flex-col gap-3">
+        @foreach (var player in Game.Players)
+        {
+            <div class="appear flex items-center gap-5">
+                <GameCharacter Player="@player" />
+                @player.Name
+            </div>
+        }
+    </div>
+
+    @if (Game.Players.Count < Game.Rules.MinimumPlayerCount)
+    {
+        <div class="mt-10"><em>Waiting for at least @Game.Rules.MinimumPlayerCount players&hellip;</em></div>
+        <div class="mt-10"><WaitingAnimation /></div>
+    }
+    else
+    {
+        <button class="button large mt-8 cursor-pointer" @onclick="StartGameAsync">Start game</button>
+
+        <blockquote class="absolute -left-[10rem] bottom-[4rem] hidden md:block">
+            <div class="bubble right comic text-3xl">
+                Start<br />game!
+            </div>
+        </blockquote>
+
+    }
+
+    <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>
+
+</div>

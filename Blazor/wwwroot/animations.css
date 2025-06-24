@@ -1,0 +1,4 @@
+.appear {
+    @apply animate-[pulse_0.8s_ease-in-out];
+    animation-iteration-count: 4;
+}

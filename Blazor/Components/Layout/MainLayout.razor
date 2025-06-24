@@ -1,0 +1,25 @@
+﻿@inherits LayoutComponentBase
+
+<main class="m-6 md:m-12">
+    <ErrorBoundary>
+        <ChildContent>
+            @Body
+        </ChildContent>
+        <ErrorContent Context="exception">
+            <p class="mb-6">😈 A rotten gremlin got us. Sorry!</p>
+            <p class="mb-12"><a class="underline" href="/">Go back home</a></p>
+
+            @if (HostEnvironment.IsDevelopment())
+            {
+                <pre>@exception.Message</pre>
+                <pre>@exception.StackTrace</pre>
+            }
+        </ErrorContent>
+    </ErrorBoundary>
+</main>
+
+@code
+{
+    [Inject]
+    public IHostEnvironment HostEnvironment { get; set; } = null!;
+}

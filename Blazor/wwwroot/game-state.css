@@ -1,0 +1,19 @@
+#game-monitor-game-state {
+    @apply w-full table-auto;
+
+    th {
+        @apply font-semibold align-bottom;
+    }
+    td, th {
+        @apply text-center py-1 px-4 lg:py-4;
+        @apply border-b border-solid border-zinc-300;
+
+        &:first-child {
+            @apply text-left;
+        }
+    }
+
+    .winner {
+        @apply bg-green-100;
+    }
+}

@@ -1,0 +1,11 @@
+﻿@using Game.Model
+
+@code {
+    [Parameter]
+    public Player Player { get; set; } = null!;
+}
+
+@for (var i = 0; i < Player.Bullets; i++)
+{
+    <img src="img/Bullet.svg" class="inline-block w-[20px]" />
+}

@@ -1,0 +1,56 @@
+﻿@page "/game-monitor"
+@page "/game-monitor/{GameId}"
+@using Shared.Model
+
+@code
+{
+    [Parameter] public string? GameId { get; set; }
+}
+
+<div class="mx-auto flex flex-col items-center">
+
+    <h1>Mexican Standoff</h1>
+
+    <div class="mt-6">
+        <img src="img/signature-villans.png" class="max-w-[100px]" />
+    </div>
+
+
+    @if (_initializing)
+    {
+        <div class="mt-10 gap-5 flex flex-col items-center">
+            Initializing game&hellip;
+            <WaitingAnimation />
+        </div>
+    }
+    else if (_game == null)
+    {
+        <ErrorBox>
+            Sad story.
+            <br />Gremlins devoured that game.
+        </ErrorBox>
+        <a href="/" class="button mt-10" @onclick="MaybeResetDevGameAsync">Back to start</a>
+    }
+    else if (_game.State == GameState.Created)
+    {
+        <WaitForJoin Game="_game" HubConnection="_hubConnection" />
+
+        @* <a href="/" class="button neutral mt-10">&lt; Quit</a> *@
+    }
+    else if (_game.State is GameState.Playing or GameState.Ended)
+    {
+        <ShowGame @ref="_showGameComponent" Game="_game" HubConnection="_hubConnection" />
+
+        @if (_game.State == GameState.Ended && _lastRevealDone)
+        {
+            <button class="button mt-10" @onclick="PlayAgainAsync">Play again</button>
+            <a href="/" class="button neutral mt-10" @onclick="MaybeResetDevGameAsync">Back to start</a>
+        }
+    }
+    else
+    {
+        <div>
+            Game state: @_game.State
+        </div>
+    }
+</div>

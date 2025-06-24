@@ -1,0 +1,110 @@
+.selectable-cards {
+    --overlap-x: 1.25rem;
+    --overlap-y: 1.5rem;
+    @apply flex flex-wrap justify-center;
+    margin-left: calc(var(--overlap-x) / 2);
+    margin-right: calc(var(--overlap-x) / 2);
+    margin-top: var(--overlap-y);
+}
+
+.selectable-card {
+    @apply text-black bg-white shadow-md shadow-amber-900/40;
+    @apply flex flex-col gap-3 justify-center items-center;
+    @apply m-1 p-3;
+    @apply w-[7rem] h-[9rem];
+    @apply -ml-(--overlap-x) -mt-(--overlap-y);
+    @apply rounded-md border border-solid border-(--major-text-fg);
+    @apply cursor-pointer touch-none;
+    transition: all 0.3s;
+}
+
+.selectable-card:nth-of-type(2n) {
+    margin-top: calc(var(--overlap-y) * -1.5);
+}
+
+.selectable-card.selected {
+    @apply bg-amber-200 text-amber-900 font-bold;
+}
+
+.selectable-card .card-name {
+    @apply break-all uppercase;
+}
+
+.selectable-card .target {
+    @apply uppercase text-center leading-4;
+
+}
+
+.selectable-card .long-name {
+    @apply break-all;
+}
+
+.bullet {
+    display: inline-block;
+    background-image: url("./img/Bullet.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+    margin-right: -0.75em;
+}
+
+.bullet.card-size {
+    background-size: 3.5rem;
+    width: 4rem;
+    height: 4rem;
+    margin-right: 0;
+}
+
+.coin {
+    display: inline-block;
+    background-image: url("./img/Coin.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+}
+
+.coin.small {
+    background-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.chest {
+    display: inline-block;
+    background-image: url("./img/Chest.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: middle;
+}
+
+.chest.card-size {
+    background-size: 3.5rem;
+    width: 4rem;
+    height: 4rem;
+}
+
+.dodge {
+    display: inline-block;
+    background-image: url("./img/Dodge.png");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 4.5rem;
+    width: 4rem;
+    height: 2.1rem;
+    vertical-align: middle;
+}
+
+.dodge.card-size {
+    background-size: 6rem;
+    width: 6rem;
+    height: 3.2rem;
+}

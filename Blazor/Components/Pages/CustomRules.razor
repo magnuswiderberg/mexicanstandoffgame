@@ -1,0 +1,88 @@
+﻿@page "/custom-rules"
+
+<div class="mx-auto flex max-w-lg flex-col items-center">
+    <h1>Mexican Standoff</h1>
+    <h2>A Quick Mind Game</h2>
+
+    <div class="mt-10">
+        <img src="img/signature-villans.png" class="max-w-[200px]" />
+    </div>
+</div>
+
+<EditForm Model="@_rules" OnValidSubmit="@CreateCustomizedGame">
+
+    <section class="mx-auto mt-10 flex max-w-lg flex-col items-center gap-10">
+
+        <table id="custom-rules">
+            <tr>
+                <td>
+                    <label for="coins-to-win">Shots to die</label>
+
+                    <div class="info">
+                        The number of "life" counters each players starts with.<br />
+                        A larger number makes the game longer.<br />
+                        Life counters can not be restored during a game.
+                    </div>
+                </td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.ShotsToDie" min="1" id="shots-to-die" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="coins-to-win">Coins to win</label>
+
+                    <div class="info">
+                        The player first to reach this wins the game.<br />
+                        A larger number makes the game longer.<br />
+                        Coins can be obtained by visiting the chest,<br />or by killing other players.
+                    </div>
+                </td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.CoinsToWin" min="1" id="coins-to-win" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="coins-to-win">Maximum bullets in gun</label>
+
+                    <div class="info">
+                        The gun can be loaded with this many bullets.<br />
+                        A smaller number makes the game more strategic,<br />
+                        as players have to think more about when to shoot.<br />
+                    </div>
+                </td>
+                <td>
+                    <InputNumber @bind-Value="@_rules.MaxBullets" min="1" id="maximum-bullets" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="timeout-seconds">Maximum time to select card (0 to disable)</label>
+
+                    <div class="info">
+                        With a time limit, the game progresses faster.<br />
+                        The Dodge action is selected if the time runs out.<br/>
+                        NOTE: Use this only for experienced players.</div>
+                </td>
+                <td class="text-nowrap">
+                    <InputNumber @bind-Value="@_rules.SelectCardTimeoutSeconds" min="0" id="timeout-seconds" /> s
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="chest-count-1">Maximum players on chest to get coin</label>
+
+                    <div class="info">
+                        If multiple players are on the chest, they only get a coin if the number of players is less than or equal to this number.
+                    </div>
+                </td>
+                <td><InputNumber @bind-Value="@_maxOnChest" min="1" max="@(MaxPlayers + 1)" id="chest-count-1" /></td>
+            </tr>
+        </table>
+
+        <button type="submit" class="button is-large is-rounded">Create game!</button>
+        <a href="/" class="button neutral is-rounded">&lt; Back</a>
+
+    </section>
+</EditForm>

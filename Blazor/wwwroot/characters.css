@@ -1,0 +1,76 @@
+.character-wrapper {
+    @apply inline-block;
+}
+
+.character {
+    @apply flex flex-col gap-1 items-center;
+
+    --bg-color: white;
+}
+
+.character span:first-child {
+    background-image: url("img/character.svg");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    border-radius: 50%;
+    border: 1px solid black;
+    background-color: var(--bg-color);
+}
+
+.character .size-medium {
+    background-size: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
+}
+
+.character .size-small {
+    background-size: 1.75rem;
+    width: 2rem;
+    height: 2rem;
+}
+
+.character .size-large {
+    background-size: 4rem;
+    width: 5rem;
+    height: 5rem;
+    background-size: 3.5rem;
+    width: 4.5rem;
+    height: 4.5rem;
+}
+
+.character .character-1 {
+    --bg-color: #E63946;
+}
+
+.character .character-2 {
+    --bg-color: #F1FAEE;
+}
+
+.character .character-3 {
+    --bg-color: #A8DADC;
+}
+
+.character .character-4 {
+    --bg-color: #457B9D;
+}
+
+.character .character-5 {
+    --bg-color: #1D3557;
+}
+
+.character .character-6 {
+    --bg-color: #F4A261;
+}
+
+.character .character-7 {
+    --bg-color: #E9C46A;
+}
+
+.character .character-8 {
+    --bg-color: #2A9D8F;
+}
+
+.character .name-under {
+    font-size: small;
+    overflow: auto;
+}
