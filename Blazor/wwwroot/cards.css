@@ -60,7 +60,7 @@
 
 .coin {
     display: inline-block;
-    background-image: url("./img/Coin.svg");
+    background-image: url("./img/coin.png");
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 1.75rem;
@@ -77,7 +77,7 @@
 
 .chest {
     display: inline-block;
-    background-image: url("./img/Chest.svg");
+    background-image: url("./img/chest.png");
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 1.75rem;
@@ -87,24 +87,82 @@
 }
 
 .chest.card-size {
-    background-size: 3.5rem;
-    width: 4rem;
-    height: 4rem;
+    background-size: 5rem;
+    width: 5rem;
+    height: 5rem;
+}
+
+.chest.monitor-size {
+    background-size: 10rem;
+    width: 10rem;
+    height: 10rem;
 }
 
 .dodge {
     display: inline-block;
-    background-image: url("./img/Dodge.png");
+    background-image: url("./img/dodge.png");
     background-repeat: no-repeat;
     background-position: 50%;
-    background-size: 4.5rem;
-    width: 4rem;
-    height: 2.1rem;
+    background-size: 3rem;
+    width: 3rem;
+    height: 3rem;
     vertical-align: middle;
 }
 
 .dodge.card-size {
     background-size: 6rem;
     width: 6rem;
-    height: 3.2rem;
+    height: 6rem;
+}
+
+.dodge.monitor-size {
+    background-size: 10rem;
+    width: 10rem;
+    height: 10rem;
+}
+
+.load {
+    display: inline-block;
+    background-image: url("./img/load.png");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    vertical-align: middle;
+}
+
+.load.card-size {
+    background-size: 5rem;
+    width: 5rem;
+    height: 5rem;
+}
+
+.load.monitor-size {
+    background-size: 10rem;
+    width: 10rem;
+    height: 10rem;
+}
+
+.attack {
+    display: inline-block;
+    background-image: url("./img/attack.png");
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    vertical-align: middle;
+}
+
+.attack.card-size {
+    background-size: 5rem;
+    width: 5rem;
+    height: 5rem;
+}
+
+.attack.monitor-size {
+    background-size: 10rem;
+    width: 10rem;
+    height: 10rem;
 }

@@ -27,7 +27,7 @@
 
         @if (_tutorialStep == 1)
         {
-            <GameMonitorTutorial Step="1" Direction="left" PositionClasses="-top-[11rem] left-[17rem] w-[18rem]"
+            <GameMonitorTutorial Step="1" Direction="left" PositionClasses="-top-[13rem] left-[20rem] w-[18rem]"
                                  Text="This info box shows game rules and game state"
                                  ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
         }
@@ -36,69 +36,78 @@
     @if (_revealingRoundResultIndex is not null && _revealingRoundResultIndex < _aggregatedRoundResult.Count)
     {
         var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
-        <div class="relative my-10 flex items-center gap-5 rounded-xl bg-white p-10 @_appearClassName">
+        <div class="relative my-10 rounded-xl bg-white p-10 @_appearClassName">
+            <div class="flex items-center gap-5">
 
-            @if (_tutorialStep == 7)
-            {
-                <GameMonitorTutorial Step="7" Direction="left" PositionClasses="-right-[17rem] -top-[12rem] w-[18rem]"
-                                     Text="The ACTIONS that each player selected are revealed."
-                                     ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
-            }
-            @if (_tutorialStep == 8)
-            {
-                <GameMonitorTutorial Step="8" Direction="left" PositionClasses="-bottom-[1rem] left-[23rem] w-[18rem]"
-                                     Text="Click this button to show all player's selected actions, until all are shown. That concludes the mini-tutorial!"
-                                     ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
-            }
+                @if (_tutorialStep == 7)
+                {
+                    <GameMonitorTutorial Step="7" Direction="left" PositionClasses="-right-[17rem] -top-[12rem] w-[18rem]"
+                                         Text="The ACTIONS that each player selected are revealed."
+                                         ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
+                }
+                @if (_tutorialStep == 8)
+                {
+                    <GameMonitorTutorial Step="8" Direction="left" PositionClasses="-bottom-[1rem] left-[23rem] w-[18rem]"
+                                         Text="Click this button to show all player's selected actions, until all are shown. That concludes the mini-tutorial!"
+                                         ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
+                }
 
-            @if (result.Attackers != null)
-            {
+                @if (result.Attackers != null)
+                {
+                    <div class="flex flex-col gap-2">
+                        @foreach (var attacker in result.Attackers)
+                        {
+                            <div class="flex items-center gap-2">
+                                <GameCharacter Player="@attacker" Size="large" />
+                                <span class="uppercase">@attacker.Name</span>
+                            </div>
+                        }
+                    </div>
+                    <div>
+                        @(result.Attackers.Count > 1 ? "all attack" : "attacks")
+                    </div>
+                }
+
                 <div class="flex flex-col gap-2">
-                    @foreach (var attacker in result.Attackers)
+                    @foreach (var player in result.TargetPlayers)
                     {
                         <div class="flex items-center gap-2">
-                            <GameCharacter Player="@attacker" />
-                            <span class="uppercase">@attacker.Name</span>
+                            <GameCharacter Player="@player" Size="large" />
+                            <span class="text-xl uppercase">@player.Name</span>
                         </div>
                     }
                 </div>
-                <div>
-                    @(result.Attackers.Count > 1 ? "all attack" : "attacks")
-                </div>
-            }
 
-            <div class="flex flex-col gap-2">
-                @foreach (var player in result.TargetPlayers)
+                @switch (result.Type)
                 {
-                    <div class="flex items-center gap-2">
-                        <GameCharacter Player="@player" Size="large" />
-                        <span class="text-xl uppercase">@player.Name</span>
-                    </div>
+                    case RoundActionType.Dodge:
+                        <text>@(result.TargetPlayers.Count == 1 ? "dodges" : "dodge")</text>
+                        <i class="dodge monitor-size"></i>
+                        break;
+                    case RoundActionType.Chest:
+                        <text>@(result.Successful ? $"{(result.TargetPlayers.Count == 1 ? "goes" : "go")} to chest" : "missed the chest")</text>
+                        <i class="chest monitor-size"></i>
+                        break;
+                    case RoundActionType.Load:
+                        <text>@(result.TargetPlayers.Count == 1 ? "loads" : "load") the gun</text>
+                        <i class="load monitor-size"></i>
+                        break;
                 }
+
+                @* TODO: End - maybe show more than "Good work"? *@
+                @* TODO: Remember all winners? Show them when a game ends *@
+
+                @* TODO: If money was distributed, show it *@
+                @* TODO: From chest: some animation or at least show a big coin *@
+                @* TODO: From shooting: some animation or at least show a big coin(s) for each player *@
             </div>
 
-            @switch (result.Type)
+            @if (result.Type == RoundActionType.Attack)
             {
-                case RoundActionType.Dodge:
-                    <text>@(result.TargetPlayers.Count == 1 ? "dodges" : "dodge")</text>
-                    <i class="dodge card-size"></i>
-                    break;
-                case RoundActionType.Chest:
-                    <text>@(result.Successful ? $"{(result.TargetPlayers.Count == 1 ? "goes" : "go")} to chest" : "missed the chest")</text>
-                    <i class="chest card-size"></i>
-                    break;
-                case RoundActionType.Load:
-                    <text>@(result.TargetPlayers.Count == 1 ? "loads" : "load") the gun</text>
-                    <i class="bullet card-size"></i>
-                    break;
+                <div class="mt-4 text-center">
+                    <i class="attack monitor-size"></i>
+                </div>
             }
-
-            @* TODO: End - maybe show more than "Good work"? *@
-            @* TODO: Remember all winners? Show them when a game ends *@
-
-            @* TODO: If money was distributed, show it *@
-            @* TODO: From chest: some animation or at least show a big coin *@
-            @* TODO: From shooting: some animation or at least show a big coin(s) for each player *@
         </div>
 
         <button class="button" @onclick="RevealNextAsync">@RevealNextText()</button>
@@ -120,7 +129,7 @@
             }
             @if (_tutorialStep == 4)
             {
-                var text = $"GOLD show how many coins a player has at the moment. The goal is to reach {Game.Rules.CoinsToWin} coins to win.";
+                var text = $"COINS show how many coins a player has at the moment. The goal is to reach {Game.Rules.CoinsToWin} coins to win.";
                 <GameMonitorTutorial Step="4" Direction="right" PositionClasses="-left-[17rem] bottom-[16rem] w-[18rem]"
                                      Text=@text
                                      ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
@@ -144,7 +153,7 @@
                         <tr>
                             <th class="text-left">Player</th>
                             <th>Life</th>
-                            <th>Gold</th>
+                            <th>Coins</th>
                             <th>Bullets</th>
                             @if (Game.State == GameState.Playing)
                             {
@@ -220,8 +229,6 @@
                 </table>
             </div>
         </div>
-
-        <ConfirmDialog @ref="_confirmDialog" />
     }
 
     <div class="hidden">
@@ -236,7 +243,10 @@
 
 @if (_tutorialStep == null && Game.State == GameState.Playing)
 {
-    <div class="fixed bottom-3">
+    <div class="fixed bottom-3 flex gap-10">
         <a @onclick="ActivateTutorial" class="cursor-pointer">Tutorial</a>
+        <a @onclick="MaybeQuitAsync" class="cursor-pointer">Quit</a>
     </div>
 }
+
+<ConfirmDialog @ref="_confirmDialog" />

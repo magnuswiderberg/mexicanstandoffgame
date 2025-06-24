@@ -274,6 +274,12 @@ public partial class Game
         await gameEvents.GameStateChangedAsync(Id, State);
     }
 
+    public async Task AbortAsync()
+    {
+        State = GameState.Aborted;
+        await gameEvents.GameStateChangedAsync(Id, State);
+    }
+
     public List<AggregatedRoundAction> CreateLastRoundAggregate()
     {
         var aggregatedRoundResult = new List<AggregatedRoundAction>();
@@ -330,7 +336,7 @@ public partial class Game
             var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == dodger.Source.Id);
             if (targetPlayer != null)
             {
-                var hasAttacker = attackerActions.Exists(a => a.Successful && a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
+                var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
                 if (hasAttacker) continue;
                 dodgers.Add(targetPlayer);
             }

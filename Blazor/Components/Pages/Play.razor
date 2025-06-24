@@ -85,6 +85,14 @@
         </ErrorBox>
         <a href="/" class="button mt-8">To start page</a>
     }
+    else if (_game.State == GameState.Aborted)
+    {
+        <Box>
+            Oh, dear gremlin mother!<br/><br/>
+            The game has been aborted!
+        </Box>
+        <a href="/" class="button mt-8">To start page</a>
+    }
     else if (_player == null || _playerNameInfo != null)
     {
         <h2 class="mt-5 uppercase">Game ID: @_game.Id</h2>
@@ -155,7 +163,7 @@
                                     <i class="dodge card-size"></i>
                                     break;
                                 case CardType.Load:
-                                    <i class="bullet card-size"></i>
+                                    <i class="load card-size"></i>
                                     break;
                                 case CardType.Chest:
                                     <i class="chest card-size"></i>

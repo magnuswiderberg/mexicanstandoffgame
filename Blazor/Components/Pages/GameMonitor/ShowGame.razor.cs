@@ -196,4 +196,15 @@ public partial class ShowGame
         _tutorialStep = 1;
         await InvokeAsync(StateHasChanged);
     }
+
+    private async Task MaybeQuitAsync()
+    {
+        const string question = "Really QUIT the game?";
+        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No"), async quit =>
+        {
+            if (quit != true) return;
+            await Game.AbortAsync();
+            NavigationManager.NavigateTo("/");
+        });
+    }
 }
