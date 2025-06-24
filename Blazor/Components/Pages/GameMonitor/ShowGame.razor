@@ -27,7 +27,7 @@
 
         @if (_tutorialStep == 1)
         {
-            <GameMonitorTutorial Step="1" Direction="left" PositionClasses="-top-[11rem] left-[17rem] w-[18rem]"
+            <GameMonitorTutorial Step="1" Direction="left" PositionClasses="-top-[13rem] left-[20rem] w-[18rem]"
                                  Text="This info box shows game rules and game state"
                                  ChangeStepAction="ChangeTutorialStep" EndAction="EndTutorial" />
         }
@@ -229,8 +229,6 @@
                 </table>
             </div>
         </div>
-
-        <ConfirmDialog @ref="_confirmDialog" />
     }
 
     <div class="hidden">
@@ -245,7 +243,10 @@
 
 @if (_tutorialStep == null && Game.State == GameState.Playing)
 {
-    <div class="fixed bottom-3">
+    <div class="fixed bottom-3 flex gap-10">
         <a @onclick="ActivateTutorial" class="cursor-pointer">Tutorial</a>
+        <a @onclick="MaybeQuitAsync" class="cursor-pointer">Quit</a>
     </div>
 }
+
+<ConfirmDialog @ref="_confirmDialog" />

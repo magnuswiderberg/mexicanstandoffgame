@@ -52,20 +52,14 @@ npm install tailwindcss @tailwindcss/cli
 ## TODO items
 
 - support for bring your own bot + example bots
-- Countdown time
 - Support for saving rule-sets in local storage
-- Sound when a player wins
 - Maybe: Bar to go and get life; one at the time? cost a coin?
 
 ### Play.razor
 
 - Game ended
 	- If winner:  Sound. Else other sound
-	- If game with same id exists
-		- reload the game
-		- Offer to rejoin
 - Maybe: support for switching to game state view
-- Maybe keep character id in local storage
 
 ## Resources
 

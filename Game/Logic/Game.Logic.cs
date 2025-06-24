@@ -274,6 +274,12 @@ public partial class Game
         await gameEvents.GameStateChangedAsync(Id, State);
     }
 
+    public async Task AbortAsync()
+    {
+        State = GameState.Aborted;
+        await gameEvents.GameStateChangedAsync(Id, State);
+    }
+
     public List<AggregatedRoundAction> CreateLastRoundAggregate()
     {
         var aggregatedRoundResult = new List<AggregatedRoundAction>();
