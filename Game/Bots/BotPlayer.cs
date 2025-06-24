@@ -1,7 +1,7 @@
 ﻿using Game.Model;
-using Shared.BotPlay;
-using Shared.Cards;
-using Shared.Model;
+using Common.BotPlay;
+using Common.Cards;
+using Common.Model;
 
 namespace Game.Bots;
 

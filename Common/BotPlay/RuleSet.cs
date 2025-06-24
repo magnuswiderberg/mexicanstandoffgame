@@ -1,4 +1,4 @@
-﻿namespace Shared.BotPlay
+﻿namespace Common.BotPlay
 {
     public class RuleSet
     {

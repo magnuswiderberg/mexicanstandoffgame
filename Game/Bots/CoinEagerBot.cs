@@ -1,5 +1,5 @@
-﻿//using Shared.BotPlay;
-//using Shared.Cards;
+﻿//using Common.BotPlay;
+//using Common.Cards;
 
 //namespace Game.Bots;
 

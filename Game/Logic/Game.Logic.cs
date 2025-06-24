@@ -1,6 +1,6 @@
 ﻿using Game.Model;
-using Shared.Cards;
-using Shared.Model;
+using Common.Cards;
+using Common.Model;
 
 namespace Game.Logic;
 
@@ -66,7 +66,7 @@ public partial class Game
         }
     }
 
-    public IReadOnlyList<Player> AlivePlayers => Players.Where(x => x.Shots < Rules.ShotsToDie).ToList();
+    public IReadOnlyList<Player> AlivePlayers => [.. Players.Where(x => x.Shots < Rules.ShotsToDie)];
 
     private void CompleteRound()
     {
@@ -205,10 +205,10 @@ public partial class Game
             player.SetResult(Rounds, entry.Value);
         }
 
-        actions = actions
+        actions = [.. actions
             .OrderBy(a => a.Type)
             .ThenBy(a => a.Source.Id)
-            .ToList();
+        ];
         LastRound.Actions = actions;
     }
 
@@ -238,12 +238,13 @@ public partial class Game
             // Most bullets is tiebreaker
             if (winners.Count > 1)
             {
-                winners = winners
+                var winnersCopy = winners.ToList();
+                winners = [.. winners
                     .GroupBy(x => x.Bullets)
                     .OrderBy(g => g.Key)
-                    .Where(g => g.Key == winners.Select(x => x.Bullets).Max())
+                    .Where(g => g.Key == winnersCopy.Select(x => x.Bullets).Max())
                     .SelectMany(g => g)
-                    .ToList();
+                    ];
             }
         }
 
@@ -290,7 +291,7 @@ public partial class Game
                     TargetPlayers = [targetPlayer],
                     Type = RoundActionType.Dodge,
                     Successful = false,
-                    Attackers = new()
+                    Attackers = []
                 };
                 aggregatedRoundResult.Add(aggregatedAction);
             }
@@ -314,7 +315,7 @@ public partial class Game
                     TargetPlayers = [targetPlayer],
                     Type = RoundActionType.Attack,
                     Successful = true,
-                    Attackers = new()
+                    Attackers = []
                 };
                 aggregatedRoundResult.Add(aggregatedAction);
             }

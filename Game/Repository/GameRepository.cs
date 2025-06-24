@@ -1,6 +1,6 @@
 ﻿using Game.Model;
 using Microsoft.Extensions.Caching.Memory;
-using Shared.GameEvents;
+using Common.GameEvents;
 
 namespace Game.Repository;
 

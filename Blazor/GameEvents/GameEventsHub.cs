@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Shared.Cards;
-using Shared.GameEvents;
-using Shared.Model;
+﻿using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Blazor.GameEvents;
 

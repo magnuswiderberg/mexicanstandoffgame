@@ -1,12 +1,12 @@
 using Game.Model;
 using Game.Repository;
-using Shared.Cards;
 using Shouldly;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
 using Moq;
-using Shared.GameEvents;
-using Shared.Model;
 
 #pragma warning disable CA2211
 #pragma warning disable CA2007
@@ -27,7 +27,7 @@ public class GameLogicTests
     {
         _gameEventsMock
             .Setup(m => m.CardPlayedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Card?>()))
-            .Callback((string gameId, string playerId, Card? card) =>
+            .Callback((string gameId, string _, Card? _) =>
             {
                 var game = _gameRepository.GetGame(gameId);
                 if (game!.AlivePlayers.All(p => p.SelectedCard != null))
@@ -215,18 +215,22 @@ public class GameLogicTests
     }
 
 
+#pragma warning disable xUnit1047
     public static IEnumerable<ITheoryDataRow> PlayerGetsCoinWhenSufficentlyFewAreOnTheChestData = [
-        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 1, new Dictionary<int, int> { { 3, 1 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 2, new Dictionary<int, int> { { 3, 2 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 3, new Dictionary<int, int> { { 3, 3 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 1, new Dictionary<int, int> { { 8, 1 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 2, new Dictionary<int, int> { { 8, 2 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 3, new Dictionary<int, int> { { 8, 3 } }),
-        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 4, new Dictionary<int, int> { { 8, 8 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 1, new() { { 3, 1 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 2, new() { { 3, 2 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(3, 3, new() { { 3, 3 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 1, new() { { 8, 1 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 2, new() { { 8, 2 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 3, new() { { 8, 3 } }),
+        new TheoryDataRow<int, int, Dictionary<int, int>>(8, 4, new() { { 8, 8 } }),
     ];
+#pragma warning restore xUnit1047
 
     [Theory]
+#pragma warning disable xUnit1042
     [MemberData(nameof(PlayerGetsCoinWhenSufficentlyFewAreOnTheChestData))]
+#pragma warning restore xUnit1042
     public async Task Player_Gets_Coin_When_Sufficently_Few_Are_On_The_Chest(int players, int playersToGetCoin, Dictionary<int, int> setup)
     {
         var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { ChestsPerPlayerCount = setup });

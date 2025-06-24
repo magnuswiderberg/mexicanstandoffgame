@@ -1,4 +1,4 @@
-﻿//namespace Shared.Cards;
+﻿//namespace Common.Cards;
 
 //public class ChestCard : Card
 //{

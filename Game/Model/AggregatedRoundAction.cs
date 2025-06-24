@@ -1,4 +1,4 @@
-﻿using Shared.Model;
+﻿using Common.Model;
 #pragma warning disable CA2227
 
 namespace Game.Model;

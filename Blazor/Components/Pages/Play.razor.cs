@@ -1,14 +1,14 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Blazor.Components.Elements;
+using Common.Cards;
+using Common.GameEvents;
+using Common.Model;
 using Game.Model;
 using Microsoft.AspNetCore.Components;
 using Game.Repository;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Shared.Cards;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.SignalR.Client;
-using Shared.GameEvents;
-using Shared.Model;
 
 namespace Blazor.Components.Pages;
 

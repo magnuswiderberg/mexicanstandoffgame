@@ -1,8 +1,8 @@
-﻿using Shared.Cards;
-using Shared.Model;
+﻿using Common.Cards;
+using Common.Model;
 
 #pragma warning disable CA1034
-namespace Shared.GameEvents;
+namespace Common.GameEvents;
 
 public interface IGameEvents
 {

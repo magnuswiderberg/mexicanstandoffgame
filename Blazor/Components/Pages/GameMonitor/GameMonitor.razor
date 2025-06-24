@@ -1,6 +1,6 @@
 ﻿@page "/game-monitor"
 @page "/game-monitor/{GameId}"
-@using Shared.Model
+@using Common.Model
 
 @code
 {
@@ -18,7 +18,7 @@
 
     @if (_initializing)
     {
-        <div class="mt-10 gap-5 flex flex-col items-center">
+        <div class="mt-10 flex flex-col items-center gap-5">
             Initializing game&hellip;
             <WaitingAnimation />
         </div>
