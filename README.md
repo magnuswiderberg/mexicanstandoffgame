@@ -11,6 +11,8 @@ A quick mind game, implemented with Blazor and SignalR.
 
 Deploy as a .NET Blazor app, e.g. as an Azure Web App.
 
+Currently deployed at [https://mexican-standoff.azurewebsites.net](https://mexican-standoff.azurewebsites.net).
+
 **azure-webapps-dotnet-core.yml**
 
 The GitHub workflow defined
@@ -57,10 +59,15 @@ npm install tailwindcss @tailwindcss/cli
 
 ### Play.razor
 
-- Game ended
-	- If winner:  Sound. Else other sound
 - Maybe: support for switching to game state view
+
+### ShowGame.razor
+- Remember all winners? Show them when a game ends
+- If money was distributed, show it
+	- From chest: some animation or at least show a big coin
+	- From shooting: some animation or at least show a big coin(s) for each player
 
 ## Resources
 
-SVG icons: https://www.svgrepo.com/
+- SVG icons: https://www.svgrepo.com/
+- Sound files: https://freesound.org/

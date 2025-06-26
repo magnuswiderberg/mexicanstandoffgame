@@ -92,18 +92,51 @@ public partial class GameMonitor : IAsyncDisposable
         {
             await InvokeAsync(StateHasChanged);
         });
-        _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async (gameStateWhenRevealed) =>
+        _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async gameStateWhenRevealed =>
         {
             if (_game == null) return;
             //await GameEvents.NewRoundAsync(_game.Id);
 
-            // TODO: _lastRevealDone is set too early
-            if (gameStateWhenRevealed == GameState.Ended) _lastRevealDone = true;
-            await InvokeAsync(StateHasChanged);
+            if (gameStateWhenRevealed == GameState.Ended)
+            {
+                await _showGameComponent.WaitForLastRevealAsync();
+
+                _lastRevealDone = true;
+                await InvokeAsync(StateHasChanged);
+                await SpeakWinner();
+            }
         });
 
         await _hubConnection.StartAsync();
         await _hubConnection.InvokeAsync(IGameEvents.JoinGameMethod, _game.Id);
+    }
+    
+    private async Task SpeakWinner()
+    {
+        if (_game == null) return;
+        if (_showGameComponent.UseSpeech() == false) return;
+
+        var winnerStart = Random.Shared.Next(0, 3) switch
+        {
+            0 => "Tallying the results ...",
+            1 => "Game results are in!",
+            _ => "The game is over!"
+        };
+        switch (_game.Winners.Count)
+        {
+            case 0:
+                await JsRuntime.InvokeVoidAsync("Speak", $"{winnerStart} No winner this game...");
+                break;
+            case 1:
+                await JsRuntime.InvokeVoidAsync("Speak", $"{winnerStart} And the winner is ... {_game.Winners[0].Name}!");
+                break;
+            default:
+            {
+                var winners = string.Join(" and ", _game.Winners.Select(x => x.Name));
+                await JsRuntime.InvokeVoidAsync("Speak", $"{winnerStart} And the winners are ... {winners}!");
+                break;
+            }
+        }
     }
 
     private async Task MaybeResetDevGameAsync()
@@ -121,8 +154,8 @@ public partial class GameMonitor : IAsyncDisposable
         {
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            await _game.AddPlayerAsync(new RandomBot("mrrandom", Character.Random(_game.AllCharacters())));
-            await _game.AddPlayerAsync(new TriggerHappyBot("mrtrigger", Character.Random(_game.AllCharacters())));
+            await _game.AddPlayerAsync(new RandomBot("Mr Random", Character.Random(_game.AllCharacters())));
+            await _game.AddPlayerAsync(new TriggerHappyBot("Mr Trigger", Character.Random(_game.AllCharacters())));
 #pragma warning restore CS0618 // Type or member is obsolete
         }
         

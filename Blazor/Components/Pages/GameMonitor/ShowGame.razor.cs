@@ -24,9 +24,13 @@ public partial class ShowGame
     private ConfirmDialog _confirmDialog = null!;
 
     private int? _tutorialStep;
-
+    private bool _revealButtonDisabled;
+    private bool _lastRevealDone;
+    
+    private bool _useSpeech = true;
 
     private const string TutorialDoneKey = "gamemonitor_tutorial_done";
+    private const string UseSpeechKey = "use_speech";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -35,6 +39,10 @@ public partial class ShowGame
         var tutorialDoneValueTask = await ProtectedLocalStorage.GetAsync<bool>(TutorialDoneKey);
         if (tutorialDoneValueTask.Success) _tutorialStep = tutorialDoneValueTask.Value ? null : 1;
         else _tutorialStep = 1;
+
+        var useSpeechValueTask = await ProtectedLocalStorage.GetAsync<bool>(UseSpeechKey);
+        if (useSpeechValueTask.Success) _useSpeech = useSpeechValueTask.Value;
+        
         await InvokeAsync(StateHasChanged);
     }
 
@@ -48,11 +56,10 @@ public partial class ShowGame
             }
         }
 
-        //if (Game.Players.All(x => x is BotPlayer))
-        //{
-        //    await Game.SetRoundCompletedAsync();
-        //}
-        //else
+        // TODO: Looks very much like RevealNextAsync...
+
+        _revealButtonDisabled = true;
+        try
         {
             _revealingRoundResultIndex = null;
             _aggregatedRoundResult = Game.CreateLastRoundAggregate();
@@ -60,6 +67,7 @@ public partial class ShowGame
             {
                 _revealingRoundResultIndex = 0;
                 await InvokeAsync(SetAppearClassNameDelayed);
+                await InvokeAsync(StateHasChanged);
 
                 if (_revealingRoundResultIndex.HasValue)
                 {
@@ -68,13 +76,22 @@ public partial class ShowGame
                 }
             }
         }
-
-        if (_tutorialStep == 6)
+        finally
         {
-            _tutorialStep = 7;
-        }
+            _revealButtonDisabled = false;
+            if (_useSpeech) await RevealNextAsync();
+            if (Game.State == GameState.Ended)
+            {
+                _lastRevealDone = true;
+            }
 
-        await InvokeAsync(StateHasChanged);
+            if (_tutorialStep == 6)
+            {
+                _tutorialStep = 7;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task SetAppearClassNameDelayed()
@@ -88,25 +105,42 @@ public partial class ShowGame
 
     private async Task RevealNextAsync()
     {
-        _revealingRoundResultIndex++;
-        if (_revealingRoundResultIndex >= _aggregatedRoundResult.Count)
+        _revealButtonDisabled = true;
+        try
         {
-            _revealingRoundResultIndex = null;
-            _appearClassName = null;
-            _aggregatedRoundResult.Clear();
+            _revealingRoundResultIndex++;
+            if (_revealingRoundResultIndex >= _aggregatedRoundResult.Count)
+            {
+                _revealingRoundResultIndex = null;
+                _appearClassName = null;
+                _aggregatedRoundResult.Clear();
 
-            await Game.SetRoundCompletedAsync();
-            await HubConnection.InvokeAsync(IGameEvents.RevealDoneMethod, Game.Id, Game.State);
-            await EndTutorial(0);
+                await Game.SetRoundCompletedAsync();
+                await HubConnection.InvokeAsync(IGameEvents.RevealDoneMethod, Game.Id, Game.State);
+                await EndTutorial(0);
+            }
+            else if (_revealingRoundResultIndex.HasValue)
+            {
+                await InvokeAsync(StateHasChanged);
+                var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
+                await PlayActionSoundAsync(result);
+            }
+
+            await InvokeAsync(SetAppearClassNameDelayed);
+            await InvokeAsync(StateHasChanged);
         }
-        else if (_revealingRoundResultIndex.HasValue)
+        finally
         {
-            var result = _aggregatedRoundResult[_revealingRoundResultIndex.Value];
-            await PlayActionSoundAsync(result);
+            _revealButtonDisabled = false;
+            if (_revealingRoundResultIndex < _aggregatedRoundResult.Count)
+            {
+                if (_useSpeech) await RevealNextAsync();
+            }
+            else if (Game.State == GameState.Ended)
+            {
+                _lastRevealDone = true;
+            }
         }
-
-        await InvokeAsync(SetAppearClassNameDelayed);
-        await InvokeAsync(StateHasChanged);
     }
 
     private MarkupString RevealNextText()
@@ -152,7 +186,7 @@ public partial class ShowGame
                 }
                 else
                 {
-                    await JsRuntime.InvokeVoidAsync("playSound", "sound-missed-chest");
+                    // TODO: does not play well with the speech; await JsRuntime.InvokeVoidAsync("playSound", "sound-missed-chest");
                 }
                 await Task.Delay(200);
             }
@@ -163,6 +197,82 @@ public partial class ShowGame
             {
                 await JsRuntime.InvokeVoidAsync("playSound", "sound-load");
                 await Task.Delay(300);
+            }
+        }
+
+        await SpeakActionsAsync(result);
+    }
+
+    private async Task SpeakActionsAsync(AggregatedRoundAction result)
+    {
+        if (_useSpeech == false) return;
+
+        if (result.Attackers?.Count == 1)
+        {
+            var text = $"{result.Attackers[0].Name} attacks {result.TargetPlayers[0].Name} ...";
+            if (result.Successful && result.TargetPlayers[0].Alive == false) text += " who dies";
+            else if (result.Successful) text += " and hits!";
+            else text += " but misses!";
+            await JsRuntime.InvokeVoidAsync("Speak", text);
+        }
+        else if (result.Attackers?.Count > 1)
+        {
+            var attackers = string.Join(" and ", result.Attackers.Select(p => p.Name));
+            var text = $"{attackers} attack {result.TargetPlayers[0].Name} ...";
+            if (result.Successful && result.TargetPlayers[0].Alive == false) text += " who dies"; // TODO: Gets coins...
+            else if (result.Successful) text += " and hits!";
+            else text += " but misses!";
+            await JsRuntime.InvokeVoidAsync("Speak", text);
+        }
+
+        if (result.Type == RoundActionType.Dodge)
+        {
+            if (result.TargetPlayers.Count == 1)
+            {
+                var text = $"{result.TargetPlayers[0].Name} dodges ...";
+                if (result.Attackers == null) text += " in vain!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
+            }
+            else
+            {
+                var extraWord = result.TargetPlayers.Count > 2 ? "all" : "both";
+                var text = $"{string.Join(" and ", result.TargetPlayers.Select(p => p.Name))} {extraWord} dodge ...";
+                if (result.Attackers == null) text += " in vain!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
+            }
+        }
+        else if (result.Type == RoundActionType.Chest)
+        {
+            if (result.TargetPlayers.Count == 1)
+            {
+                var text = $"{result.TargetPlayers[0].Name} goes to the chest ...";
+                if (result.Successful) text += " and gets a coin!";
+                else text += " in vain!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
+            }
+            else
+            {
+                var extraWord = result.TargetPlayers.Count > 2 ? "all" : "both";
+                var text = $"{string.Join(" and ", result.TargetPlayers.Select(p => p.Name))} {extraWord} go to the chest ...";
+                if (result.Successful) text += " and get a coin each!";
+                else text += " in vain!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
+            }
+        }
+        else if (result.Type == RoundActionType.Load)
+        {
+            if (result.TargetPlayers.Count == 1)
+            {
+                var text = $"{result.TargetPlayers[0].Name} loads the gun ...";
+                if (result.Successful == false) text += " but fails!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
+            }
+            else
+            {
+                var extraWord = result.TargetPlayers.Count > 2 ? "all" : "both";
+                var text = $"{string.Join(" and ", result.TargetPlayers.Select(p => p.Name))} {extraWord} load their guns ...";
+                if (result.Successful == false) text += " but fails!";
+                await JsRuntime.InvokeVoidAsync("Speak", text);
             }
         }
     }
@@ -206,5 +316,27 @@ public partial class ShowGame
             await Game.AbortAsync();
             NavigationManager.NavigateTo("/");
         });
+    }
+
+    public async Task WaitForLastRevealAsync()
+    {
+        if (_lastRevealDone) return;
+
+        var maxWaitUntil = DateTime.UtcNow.AddSeconds(15);
+        while (_lastRevealDone == false)
+        {
+            await Task.Delay(100);
+            if (DateTime.UtcNow > maxWaitUntil) break;
+        }
+    }
+
+    private async Task UseSpeechToggled()
+    {
+        await ProtectedLocalStorage.SetAsync(UseSpeechKey, _useSpeech);
+    }
+
+    public bool UseSpeech()
+    {
+        return _useSpeech;
     }
 }

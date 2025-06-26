@@ -88,7 +88,7 @@ public partial class Game
         // Attacks
         foreach (var player in AlivePlayers
                      .Where(player => player.SelectedCard is AttackCard)
-                     .Where(player => player.Bullets != 0)
+                     .Where(player => player.Bullets > 0)
                      .ToList())
         {
             var attackCard = player.SelectedCard as AttackCard;
@@ -175,24 +175,27 @@ public partial class Game
         {
             var player = Players.First(x => x.Id == entry.Key);
             player.Shots += entry.Value;
+            if (player.Shots >= Rules.ShotsToDie)
+            {
+                player.SetDead();
+            }
         }
         foreach (var (playerId, bullets) in bulletsDiff)
         {
             var player = Players.First(x => x.Id == playerId);
             player.Bullets += bullets;
-            if (player.Shots >= Rules.ShotsToDie) player.SetDead();
         }
-        foreach (var (playerId, _) in bulletsDiff)
+        foreach (var player in Players.ToList())
         {
-            var player = Players.First(x => x.Id == playerId);
-            if (!player.Alive)
+            if (player.Alive == false)
             {
                 var aliveShooters = shotBy[player.Id].Where(x => x.Alive).ToList();
                 if (aliveShooters.Count != 0)
                 {
+                    var dividedCoins = player.Coins / aliveShooters.Count;
                     foreach (var shooter in aliveShooters)
                     {
-                        shooter.Coins += player.Coins / aliveShooters.Count;
+                        shooter.Coins += dividedCoins;
                     }
                     player.Coins = 0;
                 }
