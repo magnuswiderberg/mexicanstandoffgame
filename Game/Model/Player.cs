@@ -1,12 +1,19 @@
 ﻿using System.Text.Json.Serialization;
 using Common.Cards;
+using Common.Model;
 
 namespace Game.Model
 {
-    public class Player(string id, Character character)
+    public class Player(PlayerId id, Character character)
     {
-        public string Id { get; } = id;
-        public string Name { get; set; } = character.Name;
+        public PlayerId Id { get; } = id;
+
+        public string Name
+        {
+            get => _name.Length > 20 ? _name[..20] : _name;
+            set => _name = value;
+        }
+
         public Character Character { get; } = character;
 
         public Card? SelectedCard { get; private set; }
@@ -24,13 +31,14 @@ namespace Game.Model
         private bool _locked;
 
         private readonly Dictionary<int, bool> _results = [];
+        private string _name = character.Name;
 
         public async Task SetSelectedCardAsync(Card? card)
         {
             if (_locked) return;
-            if (card == null && SelectedCard != null
-                || card != null && SelectedCard == null
-                || card != null && !card.Equals(SelectedCard))
+            if ((card == null && SelectedCard != null)
+                || (card != null && SelectedCard == null)
+                || (card != null && !card.Equals(SelectedCard)))
             {
                 SelectedCard = card;
                 if (CardChanged != null) await CardChanged(this);

@@ -1,0 +1,178 @@
+﻿@page "/external-bot-reference"
+@using Game.Model
+
+@code
+{
+    private readonly Rules _standardRules = new();
+}
+
+<div class="mx-auto flex max-w-2xl flex-col items-center">
+    <h1>Mexican Standoff</h1>
+    <h2>A Quick Mind Game</h2>
+
+    <div class="mt-5 rounded-lg bg-white px-4 pb-4 md:px-6 md:pb-6">
+        <div class="mt-5">
+            This is how to add an <span class="emphasis">EXTERNAL bot</span> to game.
+            The bot must fulfill this <span class="emphasis">REST contract</span>:
+        </div>
+
+        <p class="mt-5 font-semibold">Bot info endpoint</p>
+        <p class="mt-1">Information about the bot, such as name and id.</p>
+        <pre class="mt-1 rounded border-2 border-amber-600 bg-amber-50 p-3 text-sm">GET https://{host}/{path}
+Accept: application/json
+
+### With response
+{
+  "name": "Bot name"
+}
+</pre>
+
+        <p class="mt-5 font-mono font-semibold">Bot action endpoint</p>
+        <p class="mt-1">
+            This endpoint is called for every round in the game,
+            and it's the bot's responsibility to return an action for that round.
+            Return one of the cards in the <code>selectable_cards</code> array.
+        </p>
+        <pre class="mt-1 rounded border-2 border-amber-600 bg-amber-50 p-3 text-sm">POST https://{host}/{path}/actions
+Content-Type: application/json
+Accept: application/json
+
+{
+  "game_id": "Game ID",
+  "round_number": 1,
+  "selectable_cards": [
+    {
+      "type": "Dodge"
+    },
+    {
+      "type": "Load"
+    },
+    {
+      "type": "Chest"
+    },
+    {
+      "type": "Attack",
+      "target": "Player ID"
+    }
+  ],
+
+  "me": {
+    "id": "Player ID",
+    "alive": true,
+    "coins": 1,
+    "shots": 1,
+    "bullets": 1
+  },
+
+  "other_players": [
+    {
+      "id": "Player ID",
+      "alive": true,
+      "coins": 1,
+      "shots": 1,
+      "bullets": 1
+    }
+  ],
+
+  "rules": {
+    "coins_to_win": @_standardRules.CoinsToWin,
+    "shots_to_die": @_standardRules.ShotsToDie,
+    "max_bullets": @_standardRules.MaxBullets,
+    "chests_per_player_count": {
+       1: 1,
+       2: 1,
+       3: 1,
+       4: 2,
+       5: 2,
+       6: 2,
+       7: 3,
+       8: 3
+    }
+  }
+}
+
+### With response
+{
+  "type": "Attack",
+  "target": "Player ID"
+}
+# or
+{
+  "type": "Load"
+}
+# etc.
+</pre>
+
+
+        <p class="mt-5 font-mono font-semibold">Round results endpoint</p>
+        <p class="mt-1">This endpoint lets the bot know the results of a round.</p>
+        <pre class="mt-1 rounded border-2 border-amber-600 bg-amber-50 p-3 text-sm">POST https://{host}/{path}/results
+Content-Type: application/json
+
+{
+  "game_id": "Game ID",
+  "game_state": "Playing | Ended | Aborted"
+  "round": 1,
+  "action": {
+    "success": true,
+    "card": {
+      "type": "Dodge | Load | Chest | Attack"
+    }
+  },
+  "other_players": [
+    {
+      "player_id": "Player ID",
+      "success": false,
+      "action": {
+        "type": "Load"
+      }
+    },
+    {
+      "player_id": "Player ID",
+      "success": true,
+      "action": {
+        "type": "Attack",
+        "target": "Player ID"
+      }
+    },
+    // ...
+  ]
+}
+</pre>
+
+        <div class="mt-5">
+            <span class="emphasis">For failures,</span> if the bot
+            <ul class="mt-3 list-disc pl-10">
+                <li>
+                    responds with an invalid action,
+                </li>
+                <li>
+                    or does not respond with a 200 OK within 3 seconds,
+                </li>
+            </ul>
+            a response will be selected for it (Dodge action).
+        </div>
+
+        <div class="mt-5">
+            When <span class="emphasis">creating a new game</span>
+            <ul class="mt-3 list-disc pl-10">
+                <li>
+                    Click "Add bot" on the waiting screen,
+                </li>
+                <li>
+                    Enter the URL to the bot,
+                </li>
+                <li>
+                    And press "Load" to fetch the bot name.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <a href="/" class="button mt-8">&lt; Back</a>
+
+    <div class="mt-10">
+        <img src="img/chest.png" class="max-w-[200px]" />
+    </div>
+
+</div>

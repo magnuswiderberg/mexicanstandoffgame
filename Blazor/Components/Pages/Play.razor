@@ -169,7 +169,7 @@
                                     <i class="chest card-size"></i>
                                     break;
                                 case CardType.Attack:
-                                    var targetPlayer = _game.Players.FirstOrDefault(p => p.Character.Id == ((AttackCard)card).Target.Id);
+                                    var targetPlayer = _game.Players.FirstOrDefault(p => p.Id.Value == ((AttackCard)card).Target);
                                     var longestPart = targetPlayer?.Name.Split(' ').OrderByDescending(n => n.Length).FirstOrDefault();
                                     <GameCharacter Player="@targetPlayer" Size="medium" />
                                     <div class="target @(longestPart?.Length > 10 ? "long-name" : "")">@targetPlayer?.Name</div>

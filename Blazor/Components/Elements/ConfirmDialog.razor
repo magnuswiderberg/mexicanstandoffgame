@@ -1,18 +1,18 @@
 ﻿@if (_question != null)
 {
-    <div class="bg-black/70 top-0 left-0 bottom-0 right-0 absolute z-30" tabindex="0" @onkeydown="OnKeyDown" @ref="_bgElement">
-        <div class="top-40 p-6 bg-white z-31 gap-10 mx-10 relative flex flex-col rounded-lg sm:mx-auto sm:max-w-[50%]">
+    <div class="absolute bottom-0 left-0 right-0 top-0 z-30 bg-black/70" tabindex="0" @onkeydown="OnKeyDown" @ref="_bgElement">
+        <div class="z-31 relative top-40 mx-10 flex flex-col gap-10 rounded-lg bg-white p-6 sm:mx-auto sm:max-w-[50%] @_question.ClassName">
             @_question.Message
-            <div class="gap-5 flex justify-between">
-                <button tabindex="2" class="button in-menu neutral" @onclick="() => OnOptionSelected(false)">@_question.DeclineOption</button>
+            <div class="flex justify-between gap-5">
                 <button tabindex="1" class="button in-menu" @onclick="() => OnOptionSelected(true)">@_question.AgreeOption</button>
+                <button tabindex="2" class="button in-menu neutral" @onclick="() => OnOptionSelected(false)">@_question.DeclineOption</button>
             </div>
         </div>
     </div>
 }
 @code {
 
-    public record Question(string Message, string AgreeOption, string DeclineOption);
+    public record Question(string Message, string AgreeOption, string DeclineOption, string? ClassName = null);
 
     private Question? _question;
     private Func<bool?, Task>? _callback;
@@ -48,5 +48,4 @@
             Hide();
         }
     }
-
 }

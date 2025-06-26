@@ -16,7 +16,7 @@ public partial class Game
         {
             playable.AddRange(AlivePlayers
                 .Where(x => x.Id != player.Id)
-                .Select(otherPlayer => new AttackCard(otherPlayer.Character)));
+                .Select(otherPlayer => new AttackCard(otherPlayer.Id.Value)));
         }
 
         playable.Sort((a, b) => a.Type - b.Type);
@@ -27,11 +27,11 @@ public partial class Game
     {
         if (State != GameState.Playing) return;
 
-        await gameEvents.CardPlayedAsync(Id, player.Id, player.SelectedCard);
+        await gameEvents.CardPlayedAsync(Id, player.Id.Value, player.SelectedCard);
 
         bool roundCompleted = false;
 #pragma warning disable CA2002
-        lock (this)
+        lock (Id)
         {
             try
             {
@@ -60,8 +60,6 @@ public partial class Game
                 {
                     p.NewRound();
                 }
-                // TODO: maybe trigger new round manually?
-                await gameEvents.NewRoundAsync(Id);
             }
         }
     }
@@ -71,18 +69,18 @@ public partial class Game
     private void CompleteRound()
     {
         var diffInitializer = AlivePlayers.ToDictionary(p => p.Id, _ => 0);
-        var coinsDiff = new Dictionary<string, int>(diffInitializer);
-        var shotsDiff = new Dictionary<string, int>();
-        var shotBy = new Dictionary<string, List<Player>>(Players.ToDictionary(p => p.Id, _ => new List<Player>()));
-        var bulletsDiff = new Dictionary<string, int>(diffInitializer);
-        var result = new Dictionary<string, bool>();
+        var coinsDiff = new Dictionary<PlayerId, int>(diffInitializer);
+        var shotsDiff = new Dictionary<PlayerId, int>();
+        var shotBy = new Dictionary<PlayerId, List<Player>>(Players.ToDictionary(p => p.Id, _ => new List<Player>()));
+        var bulletsDiff = new Dictionary<PlayerId, int>(diffInitializer);
+        var result = new Dictionary<PlayerId, bool>();
         var actions = new List<RoundAction>();
 
         // Dodge
         foreach (var player in AlivePlayers.Where(player => player.SelectedCard?.Type == CardType.Dodge).ToList())
         {
             result[player.Id] = true;
-            actions.Add(new RoundAction(RoundActionType.Dodge, player.Character, result[player.Id]));
+            actions.Add(new RoundAction(RoundActionType.Dodge, player.Id, result[player.Id]));
         }
 
         // Attacks
@@ -92,21 +90,27 @@ public partial class Game
                      .ToList())
         {
             var attackCard = player.SelectedCard as AttackCard;
-            var attackedPlayer = Players.First(x => x.Character.Id.Equals(attackCard?.Target.Id));
-
-            // Can't attack dodging player
-            if (attackedPlayer.SelectedCard?.Type != CardType.Dodge)
+            var attackedPlayer = Players.FirstOrDefault(x => x.Id.Value == attackCard?.Target);
+            if (attackedPlayer == null)
             {
-                if (!shotsDiff.TryAdd(attackedPlayer.Id, 1)) shotsDiff[attackedPlayer.Id]++;
-                result[player.Id] = true;
-                shotBy[attackedPlayer.Id].Add(player);
+                // TODO: Should not happen
             }
             else
             {
-                result[player.Id] = false;
+                // Can't attack dodging player
+                if (attackedPlayer.SelectedCard?.Type != CardType.Dodge)
+                {
+                    if (!shotsDiff.TryAdd(attackedPlayer.Id, 1)) shotsDiff[attackedPlayer.Id]++;
+                    result[player.Id] = true;
+                    shotBy[attackedPlayer.Id].Add(player);
+                }
+                else
+                {
+                    result[player.Id] = false;
+                }
+                actions.Add(new RoundAction(RoundActionType.Attack, player.Id, result[player.Id]) { Target = attackedPlayer.Id });
             }
             bulletsDiff[player.Id] = -1;
-            actions.Add(new RoundAction(RoundActionType.Attack, player.Character, result[player.Id]) { Target = attackedPlayer.Character });
         }
 
         // Loads
@@ -124,7 +128,7 @@ public partial class Game
                     result[player.Id] = true;
                 }
             }
-            actions.Add(new RoundAction(RoundActionType.Load, player.Character, result[player.Id]));
+            actions.Add(new RoundAction(RoundActionType.Load, player.Id, result[player.Id]));
         }
 
         // Chests
@@ -150,15 +154,14 @@ public partial class Game
                     coinsDiff[player.Id]++;
                 }
             }
-            actions.Add(new RoundAction(RoundActionType.Chest, player.Character, result[player.Id]));
+            actions.Add(new RoundAction(RoundActionType.Chest, player.Id, result[player.Id]));
         }
 
         foreach (var action in actions)
         {
             if (shotsDiff.Keys
                 .Select(playerId => Players.First(p => p.Id == playerId))
-                .Select(player => player.Character)
-                .Any(character => character.Id == action.Source.Id))
+                .Any(player => player.Id == action.Source))
             {
                 action.Shot = true;
             }
@@ -210,7 +213,7 @@ public partial class Game
 
         actions = [.. actions
             .OrderBy(a => a.Type)
-            .ThenBy(a => a.Source.Id)
+            .ThenBy(a => a.Source.Value)
         ];
         LastRound.Actions = actions;
     }
@@ -290,7 +293,7 @@ public partial class Game
         var unsuccessfulAttackers = LastRound.Actions.Where(a => a is { Type: RoundActionType.Attack, Success: false });
         foreach (var action in unsuccessfulAttackers)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == action.Target?.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == action.Target);
             if (targetPlayer == null) continue;
             var aggregatedAction = aggregatedRoundResult.FirstOrDefault(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
             if (aggregatedAction == null)
@@ -304,7 +307,7 @@ public partial class Game
                 };
                 aggregatedRoundResult.Add(aggregatedAction);
             }
-            var sourcePlayer = Players.FirstOrDefault(p => p.Character.Id == action.Source.Id);
+            var sourcePlayer = Players.FirstOrDefault(p => p.Id == action.Source);
             if (sourcePlayer == null) continue;
             aggregatedAction.Attackers!.Add(sourcePlayer);
         }
@@ -312,9 +315,9 @@ public partial class Game
         var successfulAttackers = LastRound.Actions.Where(a => a is { Type: RoundActionType.Attack, Success: true });
         foreach (var action in successfulAttackers)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == action.Target?.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == action.Target);
             if (targetPlayer == null) continue;
-            var sourcePlayer = Players.FirstOrDefault(p => p.Character.Id == action.Source.Id);
+            var sourcePlayer = Players.FirstOrDefault(p => p.Id == action.Source);
             if (sourcePlayer == null) continue;
             var aggregatedAction = aggregatedRoundResult.FirstOrDefault(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
             if (aggregatedAction == null)
@@ -336,7 +339,7 @@ public partial class Game
         var dodgers = new List<Player>();
         foreach (var dodger in dodgersWithoutShooter)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == dodger.Source.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == dodger.Source);
             if (targetPlayer != null)
             {
                 var hasAttacker = attackerActions.Exists(a => a.TargetPlayers.Any(t => t.Id == targetPlayer.Id));
@@ -358,7 +361,7 @@ public partial class Game
         var loaders = new List<Player>();
         foreach (var loader in successfulLoaders)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == loader.Source);
             if (targetPlayer == null) continue;
             loaders.Add(targetPlayer);
         }
@@ -376,7 +379,7 @@ public partial class Game
         var chesters = new List<Player>();
         foreach (var loader in successfulChesters)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == loader.Source);
             if (targetPlayer == null) continue;
             chesters.Add(targetPlayer);
         }
@@ -394,7 +397,7 @@ public partial class Game
         var unchesters = new List<Player>();
         foreach (var loader in unsuccessfulChesters)
         {
-            var targetPlayer = Players.FirstOrDefault(p => p.Character.Id == loader.Source.Id);
+            var targetPlayer = Players.FirstOrDefault(p => p.Id == loader.Source);
             if (targetPlayer == null) continue;
             unchesters.Add(targetPlayer);
         }
@@ -408,11 +411,25 @@ public partial class Game
             });
         }
 
+        if (LastRound.Errors.Count != 0)
+        {
+            foreach (var roundResultError in LastRound.Errors)
+            {
+                aggregatedRoundResult.Add(new AggregatedRoundAction
+                {
+                    TargetPlayers = [Players.First(p => p.Id == roundResultError.PlayerId)],
+                    Type = RoundActionType.Error,
+                    Successful = false,
+                    Error = roundResultError.Error
+                });
+            }
+        }
+
         if (aggregatedRoundResult.Count == 0)
         {
             aggregatedRoundResult.Add(new AggregatedRoundAction
             {
-                TargetPlayers = [new Player(Guid.NewGuid().ToString(), Character.Get(1)!) { Name = "Unknown error..." }],
+                TargetPlayers = [new Player(PlayerId.From(Guid.NewGuid().ToString()), Character.Get(1)!) { Name = "Unknown error..." }],
                 Type = RoundActionType.Dodge,
                 Successful = false
             });

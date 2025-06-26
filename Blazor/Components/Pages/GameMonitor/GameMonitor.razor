@@ -14,11 +14,11 @@
     <div class="mt-6">
         @if (_game?.State == GameState.Playing || _game?.State == GameState.Ended)
         {
-            <img src="img/standoff.png" class="max-w-[250px] rounded-xl"/>
+            <img src="img/standoff.png" class="max-w-[250px] rounded-xl" />
         }
         else
         {
-            <img src="img/signature-villans.png" class="max-w-[150px]"/>
+            <img src="img/signature-villans.png" class="max-w-[150px]" />
         }
     </div>
 
@@ -41,8 +41,6 @@
     else if (_game.State == GameState.Created)
     {
         <WaitForJoin Game="_game" HubConnection="_hubConnection" />
-
-        @* <a href="/" class="button neutral mt-10">&lt; Quit</a> *@
     }
     else if (_game.State is GameState.Playing or GameState.Ended)
     {
@@ -56,8 +54,8 @@
     }
     else
     {
-        <div>
-            Game state: @_game.State
-        </div>
+        <ErrorBox>
+            [Unexpected] Game state: @_game.State
+        </ErrorBox>
     }
 </div>

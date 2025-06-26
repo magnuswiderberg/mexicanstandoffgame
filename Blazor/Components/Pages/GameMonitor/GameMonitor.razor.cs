@@ -58,44 +58,56 @@ public partial class GameMonitor : IAsyncDisposable
             .WithUrl(NavigationManager.ToAbsoluteUri(IGameEvents.HubUrl))
             .Build();
 
+        // Player joined the game
         _hubConnection.On<string>(IGameEvents.EventNames.PlayerJoined, async playerId =>
         {
             await JsRuntime.InvokeVoidAsync("playSound", "sound-join");
             await InvokeAsync(StateHasChanged);
         });
+
+        // Player left the game
         _hubConnection.On<string>(IGameEvents.EventNames.PlayerLeft, async playerId =>
         {
             // TODO: Different sound
             await JsRuntime.InvokeVoidAsync("playSound", "sound-join");
             await InvokeAsync(StateHasChanged);
         });
+
+        // New round started
         _hubConnection.On(IGameEvents.EventNames.NewRound, async () =>
         {
             if (_game == null) return;
-            foreach (var player in _game.AlivePlayers)
-            {
-                if (player is BotPlayer bot)
-                {
-                    await bot.NewGameStateAsync(_game);
-                }
-            }
+            await NewGameStateForBotsAsync();
+
         });
+
+        // Game state changed: Created, Playing, Ended, etc.
         _hubConnection.On<GameState>(IGameEvents.EventNames.GameStateChanged, async (newState) =>
         {
+            if (newState == GameState.Playing && _game.State != GameState.Playing)
+            {
+                await _game.StartNewRoundAsync(); // Get the game going
+            }
             await InvokeAsync(StateHasChanged);
         });
+
+        // Round results completed (from Game.SetRoundCompletedAsync(), from ShowGame.razor.cs)
         _hubConnection.On(IGameEvents.EventNames.RoundResultsCompleted, async () =>
         {
             await _showGameComponent.RoundResultsCompletedAsync();
         });
+
+        // Card played by a player
         _hubConnection.On<string, Card>(IGameEvents.EventNames.CardPlayed, async (playerId, card) =>
         {
             await InvokeAsync(StateHasChanged);
         });
+
+        // ShowGame.razor.cs offers buttons or speech to reval each player's action.
+        // After all that, this event happens.
         _hubConnection.On<GameState>(IGameEvents.EventNames.RevealDone, async gameStateWhenRevealed =>
         {
             if (_game == null) return;
-            //await GameEvents.NewRoundAsync(_game.Id);
 
             if (gameStateWhenRevealed == GameState.Ended)
             {
@@ -105,12 +117,29 @@ public partial class GameMonitor : IAsyncDisposable
                 await InvokeAsync(StateHasChanged);
                 await SpeakWinner();
             }
+            else
+            {
+                await _game.StartNewRoundAsync();
+            }
         });
 
         await _hubConnection.StartAsync();
         await _hubConnection.InvokeAsync(IGameEvents.JoinGameMethod, _game.Id);
     }
-    
+
+    private async Task NewGameStateForBotsAsync()
+    {
+        if (_game == null) return;
+
+        foreach (var player in _game.AlivePlayers)
+        {
+            if (player is BotPlayer bot)
+            {
+                await bot.NewGameStateAsync(_game);
+            }
+        }
+    }
+
     private async Task SpeakWinner()
     {
         if (_game == null) return;
@@ -152,14 +181,13 @@ public partial class GameMonitor : IAsyncDisposable
 
         if (_game.Id == GameRepository.DeveloperGameId)
         {
-
-#pragma warning disable CS0618 // Type or member is obsolete
-            await _game.AddPlayerAsync(new RandomBot("Mr Random", Character.Random(_game.AllCharacters())));
-            await _game.AddPlayerAsync(new TriggerHappyBot("Mr Trigger", Character.Random(_game.AllCharacters())));
-#pragma warning restore CS0618 // Type or member is obsolete
+            var baseUrl = NavigationManager.BaseUri.TrimEnd('/');
+            await _game.AddPlayerAsync(new ApiBot(new Uri($"{baseUrl}/api/bots/mrgold"), PlayerId.From("51E97B98-D650-4D55-B8CF-80052732767C"), "Mr. Gold", Character.Random(_game.AllCharacters())));
+            await _game.AddPlayerAsync(new ApiBot(new Uri($"{baseUrl}/api/bots/mrrandom"), PlayerId.From("02D7AF25-A3F4-45A1-A977-BDCF51D93F67"), "Mrs. Stochastic", Character.Random(_game.AllCharacters())));
+            await _game.AddPlayerAsync(new ApiBot(new Uri($"{baseUrl}/api/bots/mrtrigger"), PlayerId.From("02E70BA2-3D88-4C7D-A426-DCC8A007F1A1"), "Mr. Trigger", Character.Random(_game.AllCharacters())));
         }
         
-        await Task.Delay(300); // TODO: To let Blazor find peace
+        await Task.Delay(300); // To let Blazor find peace
         await InvokeAsync(StateHasChanged);
     }
 

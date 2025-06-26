@@ -56,8 +56,6 @@ public partial class ShowGame
             }
         }
 
-        // TODO: Looks very much like RevealNextAsync...
-
         _revealButtonDisabled = true;
         try
         {
@@ -280,7 +278,7 @@ public partial class ShowGame
     private async Task RemovePlayerAsync(Player player)
     {
         var question = $"Really kick {WebUtility.HtmlEncode(player.Name)} from the game?";
-        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No"), async remove =>
+        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No", "!max-w-[300px]"), async remove =>
         {
             if (remove != true) return;
             await Game.RemovePlayerAsync(player);
@@ -310,7 +308,7 @@ public partial class ShowGame
     private async Task MaybeQuitAsync()
     {
         const string question = "Really QUIT the game?";
-        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No"), async quit =>
+        await _confirmDialog.ShowAsync(new ConfirmDialog.Question(question, "Yes", "No", "!max-w-[300px]"), async quit =>
         {
             if (quit != true) return;
             await Game.AbortAsync();

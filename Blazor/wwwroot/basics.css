@@ -7,6 +7,11 @@ h1 {
     @apply text-2xl font-bold;
 }
 
+h2 {
+    color: var(--major-text-fg);
+    @apply text-lg font-bold;
+}
+
 .emphasis {
     @apply font-bold;
     color: var(--major-text-fg);
@@ -30,6 +35,11 @@ a {
         @apply text-2xl;
     }
 
+    &.small {
+        @apply text-base;
+        @apply px-6 py-1;
+    }
+
     &.neutral {
         @apply bg-white text-slate-700;
         @apply border-slate-500 shadow-md;
@@ -45,9 +55,19 @@ a {
     &.in-menu {
         @apply shadow-md;
     }
+
+    &[disabled] {
+        @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+        @apply border-gray-400;
+    }
 }
 
 input[type="text"],
 input[type="number"] {
     @apply rounded-md border-2 border-gray-300 p-2;
+}
+
+input[type="text"]:disabled {
+    @apply bg-gray-200 text-gray-500 cursor-not-allowed;
+    @apply border-gray-300;
 }

@@ -10,7 +10,7 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
     public string Id { get; } = id;
     public Rules Rules { get; } = rules ?? new Rules();
 
-    public int Rounds { get; private set; } = 1;
+    public int Rounds { get; private set; }
 
     public GameState State { get; private set; } = GameState.Created;
     public IReadOnlyList<Player> Players { get; } = (List<Player>) [];
@@ -34,25 +34,31 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
             await RemovePlayerAsync(player);
         }
         LastRound = new RoundResult();
-        Rounds = 1;
+        Rounds = 0;
         State = GameState.Created;
         await gameEvents.GameStateChangedAsync(Id, State);
     }
 
-    public async Task AddPlayerAsync(Player player)
+    public async Task<AddPlayerResultType> AddPlayerAsync(Player player)
     {
-        if (Players.Count >= Rules.MaximumPlayerCount) throw new ArgumentOutOfRangeException(nameof(player), "Can't add another player");
-        if (Players.Any(p => p.Id == player.Id)) return;
+        if (Players.Count >= Rules.MaximumPlayerCount) return AddPlayerResultType.NoSeatsLeft;
+        if (Players.Any(p => string.Equals(p.Name, player.Name, StringComparison.OrdinalIgnoreCase))) return AddPlayerResultType.NameTaken;
+        if (Players.Any(p => p.Id == player.Id)) return AddPlayerResultType.AlreadyAdded;
 
         ((List<Player>)Players).Add(player);
-        player.CardChanged = async (p) => { await PlayerCardChangedAsync(p); };
-        await gameEvents.PlayerJoinedAsync(Id, player.Id);
+        player.CardChanged = async (p) =>
+        {
+            await PlayerCardChangedAsync(p);
+        };
+        await gameEvents.PlayerJoinedAsync(Id, player.Id.Value);
 
         // Check for automatic start
         if (Players.Count >= Rules.MaximumPlayerCount)
         {
             await StartAsync();
         }
+
+        return AddPlayerResultType.Success;
     }
 
     public async Task RemovePlayerAsync(Player player)
@@ -62,7 +68,7 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
         {
             if (((List<Player>)Players).Remove(listPlayer))
             {
-                await gameEvents.PlayerLeftAsync(Id, player.Id);
+                await gameEvents.PlayerLeftAsync(Id, player.Id.Value);
             }
         }
         var winnerPlayer = Winners.FirstOrDefault(p => p.Id == player.Id);
@@ -78,9 +84,14 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
         }
     }
 
-    public async Task SetRoundCompletedAsync()
+    public async Task StartNewRoundAsync()
     {
         Rounds++;
+        await gameEvents.NewRoundAsync(Id);
+    }
+
+    public async Task SetRoundCompletedAsync()
+    {
         await gameEvents.RoundCompletedAsync(Id, LastRound);
 
         LastRound = new RoundResult();
@@ -88,7 +99,7 @@ public partial class Game(string id, IGameEvents gameEvents, Rules? rules = null
         const int maxRounds = 10000;
         if (Rounds > maxRounds)
         {
-            LastRound.Errors.Add($"The game went on for {maxRounds} rounds. Ending it now.");
+            LastRound.Errors.Add(new(PlayerId.From("_"), $"The game went on for {maxRounds} rounds. Ending it now."));
             await EndAsync();
         }
     }

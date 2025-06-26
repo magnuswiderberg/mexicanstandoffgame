@@ -1,6 +1,11 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Blazor.Components;
 using Blazor.GameEvents;
 using Common.GameEvents;
+using Common.Model;
+using Game.Bots;
 using Game.Repository;
 using Microsoft.AspNetCore.ResponseCompression;
 
@@ -11,6 +16,14 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+    });
 
 builder.Services.AddSignalR();
 builder.Services.AddResponseCompression(options =>
@@ -20,6 +33,7 @@ builder.Services.AddResponseCompression(options =>
 
 builder.Services.AddSingleton<GameRepository>();
 builder.Services.AddScoped<IGameEvents, GameEventsHub>();
+builder.Services.AddScoped<IBotService, BotService>();
 
 
 var app = builder.Build();
@@ -54,6 +68,9 @@ app.UseStaticFiles();    // Note: Use this instead for now
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapControllers();
+
 app.MapHub<GameEventsHub>(IGameEvents.HubUrl); // Note: Should be added just before app.Run()
+
 
 await app.RunAsync();

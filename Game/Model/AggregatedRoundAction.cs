@@ -9,4 +9,6 @@ public class AggregatedRoundAction
     public RoundActionType Type { get; set; }
     public bool Successful { get; set; }
     public List<Player>? Attackers { get; set; }
+    
+    public string? Error { get; set; }
 }

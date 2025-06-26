@@ -14,9 +14,9 @@ public class GameEventTests
 {
     private readonly GameRepository _gameRepository = new();
 
-    private readonly Player _player1 = new("1", Character.Get(1)!);
-    private readonly Player _player2 = new("2", Character.Get(2)!);
-    private readonly Player _player3 = new("3", Character.Get(3)!);
+    private readonly Player _player1 = new(PlayerId.From("1"), Character.Get(1)!);
+    private readonly Player _player2 = new(PlayerId.From("2"), Character.Get(2)!);
+    private readonly Player _player3 = new(PlayerId.From("3"), Character.Get(3)!);
 
     private readonly Game.Logic.Game _game;
 
@@ -30,7 +30,7 @@ public class GameEventTests
     [Fact]
     public async Task Game_Monitor_Gets_Notified_When_Player_Joins()
     {
-        _gameEventsMock.Setup(m => m.PlayerJoinedAsync(_game.Id, _player1.Id)).Verifiable();
+        _gameEventsMock.Setup(m => m.PlayerJoinedAsync(_game.Id, _player1.Id.ToString())).Verifiable();
         await _game.AddPlayerAsync(_player1);
         _gameEventsMock.Verify();
     }
@@ -39,7 +39,7 @@ public class GameEventTests
     public async Task Game_Monitor_Gets_Notified_When_Player_Leaves()
     {
         await _game.AddPlayerAsync(_player1);
-        _gameEventsMock.Setup(m => m.PlayerLeftAsync(_game.Id, _player1.Id)).Verifiable();
+        _gameEventsMock.Setup(m => m.PlayerLeftAsync(_game.Id, _player1.Id.ToString())).Verifiable();
         await _game.RemovePlayerAsync(_player1);
     }
 

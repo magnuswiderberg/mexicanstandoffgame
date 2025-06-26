@@ -17,9 +17,9 @@ public class GameLogicTests
 {
     private readonly GameRepository _gameRepository = new();
 
-    private readonly Player _player1 = new("1", Character.Get(1)!);
-    private readonly Player _player2 = new("2", Character.Get(2)!);
-    private readonly Player _player3 = new("3", Character.Get(3)!);
+    private readonly Player _player1 = new(PlayerId.From("1"), Character.Get(1)!);
+    private readonly Player _player2 = new(PlayerId.From("2"), Character.Get(2)!);
+    private readonly Player _player3 = new(PlayerId.From("3"), Character.Get(3)!);
 
     private readonly Mock<IGameEvents> _gameEventsMock = new();
 
@@ -45,7 +45,8 @@ public class GameLogicTests
         var game = _gameRepository.CreateGame(_gameEventsMock.Object, rules);
         await game.AddPlayerAsync(_player1);
         await game.AddPlayerAsync(_player2);
-        await game.AddPlayerAsync(_player3);
+        var addResult = await game.AddPlayerAsync(_player3);
+        if (addResult != AddPlayerResultType.Success) throw new InvalidOperationException();
         await game.StartAsync();
         return game;
     }
@@ -115,7 +116,7 @@ public class GameLogicTests
     [Fact]
     public async Task A_Player_Cannot_Be_Added_To_A_Game_If_There_Are_No_Seats_Left()
     {
-        await Should.ThrowAsync<ArgumentOutOfRangeException>(async () =>
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
         {
             await CreateAndStartGameWithThreePlayers(new Rules { MaximumPlayerCount = 2 });
         });
@@ -142,7 +143,7 @@ public class GameLogicTests
         _player1.Bullets++;
 
         var playableCards = game.PlayableCards(_player1);
-        playableCards.Any(c => c is AttackCard ac && ac.Target.Id == _player2.Character.Id).ShouldBeTrue();
+        playableCards.Any(c => c is AttackCard ac && ac.Target == _player2.Id.Value).ShouldBeTrue();
     }
 
     [Fact]
@@ -153,10 +154,10 @@ public class GameLogicTests
         await game.AddPlayerAsync(_player1);
         await game.AddPlayerAsync(_player2);
         await game.AddPlayerAsync(_player3);
-        await game.AddPlayerAsync(new Player("4", Character.Get(4)!));
-        await game.AddPlayerAsync(new Player("5", Character.Get(5)!));
-        await game.AddPlayerAsync(new Player("6", Character.Get(6)!));
-        await game.AddPlayerAsync(new Player("7", Character.Get(7)!));
+        await game.AddPlayerAsync(new Player(PlayerId.From("4"), Character.Get(4)!));
+        await game.AddPlayerAsync(new Player(PlayerId.From("5"), Character.Get(5)!));
+        await game.AddPlayerAsync(new Player(PlayerId.From("6"), Character.Get(6)!));
+        await game.AddPlayerAsync(new Player(PlayerId.From("7"), Character.Get(7)!));
 
         _player1.Bullets = maxBullets;
 
@@ -165,7 +166,7 @@ public class GameLogicTests
         foreach (var gamePlayer in game.Players.Except([_player1]))
         {
             playableCards
-                .Any(c => c is AttackCard ac && ac.Target.Id == gamePlayer.Character.Id)
+                .Any(c => c is AttackCard ac && ac.Target == gamePlayer.Id.Value)
                 .ShouldBeTrue($"An attack card for {gamePlayer.Character.Id} should be playable");
         }
     }
@@ -236,7 +237,7 @@ public class GameLogicTests
         var game = _gameRepository.CreateGame(_gameEventsMock.Object, new Rules { ChestsPerPlayerCount = setup });
         for (var i = 1; i <= players; i++)
         {
-            await game.AddPlayerAsync(new Player($"{i}", Character.Get(i)!));
+            await game.AddPlayerAsync(new Player(PlayerId.From($"{i}"), Character.Get(i)!));
         }
         await game.StartAsync();
 
@@ -247,17 +248,17 @@ public class GameLogicTests
 
         for (var i = 1; i <= playersToGetCoin; i++)
         {
-            await game.Players.First(p => p.Id == $"{i}").SetSelectedCardAsync(Card.Chest);
+            await game.Players.First(p => p.Id.ToString() == $"{i}").SetSelectedCardAsync(Card.Chest);
         }
         for (var i = playersToGetCoin + 1; i <= players; i++)
         {
-            await game.Players.First(p => p.Id == $"{i}").SetSelectedCardAsync(Card.Dodge);
+            await game.Players.First(p => p.Id.ToString() == $"{i}").SetSelectedCardAsync(Card.Dodge);
         }
         game.Rounds.ShouldBe(2, "The first round should have been completed");
 
         for (var i = 1; i <= playersToGetCoin; i++)
         {
-            game.Players.First(p => p.Id == $"{i}").Coins.ShouldBe(1, $"Player {i} should get a coin");
+            game.Players.First(p => p.Id.ToString() == $"{i}").Coins.ShouldBe(1, $"Player {i} should get a coin");
         }
     }
 
@@ -271,7 +272,7 @@ public class GameLogicTests
 
         await _player1.SetSelectedCardAsync(Card.Chest);
         await _player2.SetSelectedCardAsync(Card.Chest);
-        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Character)); // This should resolve the round
+        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Id.Value)); // This should resolve the round
 
         _player1.Coins.ShouldBe(1);
     }
@@ -364,7 +365,7 @@ public class GameLogicTests
         _player2.Bullets = 1;
 
         await _player1.SetSelectedCardAsync(Card.Dodge);
-        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
         await _player3.SetSelectedCardAsync(Card.Dodge);
 
         _player1.Shots.ShouldBe(0);
@@ -377,7 +378,7 @@ public class GameLogicTests
         _player2.Bullets = 1;
 
         await _player1.SetSelectedCardAsync(Card.Load);
-        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
         await _player3.SetSelectedCardAsync(Card.Dodge);
 
         _player1.Shots.ShouldBe(1);
@@ -394,8 +395,8 @@ public class GameLogicTests
         _player3.Bullets = 1;
 
         await _player1.SetSelectedCardAsync(Card.Load);
-        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
-        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
 
         _player1.Alive.ShouldBeFalse();
         _player2.Coins.ShouldBe(1);
@@ -411,7 +412,7 @@ public class GameLogicTests
         _player2.Bullets = 1;
 
         await _player1.SetSelectedCardAsync(Card.Load);
-        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
         await _player3.SetSelectedCardAsync(Card.Load);
 
         _player1.Alive.ShouldBeFalse();
@@ -434,8 +435,8 @@ public class GameLogicTests
         _player2.Coins = player2Coins;
         _player2.Bullets = 1;
 
-        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
-        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Id.Value));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
 
         _player1.Alive.ShouldBeFalse();
         _player1.Coins.ShouldBe(player1Coins);
@@ -453,9 +454,9 @@ public class GameLogicTests
         _player3.Bullets = 1;
         _player3.Shots = 1;
 
-        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
-        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
-        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Id.Value));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Id.Value));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
 
         _player1.Alive.ShouldBeTrue();
         _player2.Alive.ShouldBeFalse();
@@ -476,9 +477,9 @@ public class GameLogicTests
         _player3.Bullets = 1;
         _player3.Shots = 1;
 
-        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
-        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
-        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Id.Value));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Id.Value));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player2.Id.Value));
 
         _player1.Alive.ShouldBeTrue();
         _player2.Alive.ShouldBeFalse();
@@ -505,9 +506,9 @@ public class GameLogicTests
         _player3.Coins = 2;
         _player3.Bullets = 1;
 
-        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Character));
-        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Character));
-        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Character));
+        await _player1.SetSelectedCardAsync(new AttackCard(_player2.Id.Value));
+        await _player2.SetSelectedCardAsync(new AttackCard(_player3.Id.Value));
+        await _player3.SetSelectedCardAsync(new AttackCard(_player1.Id.Value));
 
         _player1.Alive.ShouldBeFalse();
         _player2.Alive.ShouldBeFalse();
