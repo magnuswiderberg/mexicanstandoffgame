@@ -1,6 +1,4 @@
-﻿using Common.Cards;
-
-namespace Common.Model;
+﻿namespace Common.Model;
 
 public enum RoundActionType
 {
@@ -8,15 +6,15 @@ public enum RoundActionType
     Load,
     Chest,
     Attack,
+    Error,
 }
 
-public class RoundAction(RoundActionType type, Character source, bool success)
+public class RoundAction(RoundActionType type, PlayerId source, bool success)
 {
     public RoundActionType Type { get; } = type;
-    public Character Source { get; set; } = source;
+    public PlayerId Source { get; set; } = source;
     public bool Success { get; } = success;
 
-    public Character? Target { get; set; }
+    public PlayerId? Target { get; set; }
     public bool Shot { get; set; }
-    //public int ChestNumber { get; set; }
 }

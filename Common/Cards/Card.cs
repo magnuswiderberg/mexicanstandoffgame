@@ -1,5 +1,10 @@
-﻿namespace Common.Cards;
+﻿using System.Text.Json.Serialization;
 
+namespace Common.Cards;
+
+[JsonPolymorphic]
+[JsonDerivedType(typeof(Card), typeDiscriminator: "base")]
+[JsonDerivedType(typeof(AttackCard), typeDiscriminator: "attack")]
 public class Card
 {
     public CardType Type { get; set; }

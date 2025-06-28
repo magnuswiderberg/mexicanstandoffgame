@@ -29,9 +29,17 @@
     <div class="mt-10 flex flex-col gap-3">
         @foreach (var player in Game.Players)
         {
-            <div class="appear flex items-center gap-5">
-                <GameCharacter Player="@player" />
-                @player.Name
+            <div class="appear group flex items-center justify-between gap-5">
+                <div class="flex items-center gap-5">
+                    <GameCharacter Player="@player" />
+                    @player.Name
+                </div>
+                <div class="w-16">
+                    <div class="hidden cursor-pointer group-hover:block" title="Kick from game"
+                         @onclick="() => MaybeKickPLayer(player)">
+                        ✖️
+                    </div>
+                </div>
             </div>
         }
     </div>
@@ -55,4 +63,46 @@
 
     <audio id="sound-join" src="/sound/join.mp3" preload="auto"></audio>
 
+</div>
+
+<ConfirmDialog @ref="_confirmDialog" />
+
+
+<InputDialog @ref="_externalBotDialog">
+    <div class="flex flex-col gap-3">
+        <h2>Add an API bot to the game</h2>
+        <p>The bot must fulfill <a href="/external-bot-reference" target="_blank">this spefication</a>.</p>
+        <div class="mt-4 flex flex-col gap-1 border-t border-amber-800 pt-7">
+            <label for="external-bot-url">Bot URL</label>
+            <input type="text" id="external-bot-url" @bind="_externalBotUrl" placeholder="https://example.com/bot" />
+            <div class="mt-2 flex items-center gap-2">
+                <button class="button small" @onclick="LoadBotInfoAsync">Load</button>
+                @if (_externalBotInfo.Name != null)
+                {
+                    <text>✔ @_externalBotInfo.Name</text>
+                }
+                else if (_externalBotFetchFailed)
+                {
+                    <text>❌</text>
+                }
+            </div>
+        </div>
+        <div class="mt-4 flex flex-col gap-1">
+            <label for="external-bot-name">Bot name</label>
+            <input type="text" id="external-bot-name" disabled=@(_externalBotInfo.Name == null)
+                   @bind="_externalBotInfo.Name" placeholder="Bob the gremlin" />
+        </div>
+    </div>
+</InputDialog>
+
+@if (_externalBotError != null)
+{
+    <div class="fixed bottom-16 flex gap-10 text-red-600">
+        Bot error: "@_externalBotError"
+    </div>
+}
+
+<div class="fixed bottom-3 flex gap-10">
+    <a @onclick='() => ShowBotDialog("Add bot")' class="cursor-pointer">Add bot</a>
+    <a href="/" class="cursor-pointer">Quit</a>
 </div>

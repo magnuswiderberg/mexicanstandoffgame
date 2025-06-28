@@ -93,7 +93,7 @@ public partial class Play : IAsyncDisposable
         });
         _hubConnection.On<string, Card?>(IGameEvents.EventNames.CardPlayed, async (playerId, card) =>
         {
-            if (playerId == _player?.Id)
+            if (playerId == _player?.Id.ToString())
             {
                 await InvokeAsync(StateHasChanged);
             }
@@ -111,9 +111,6 @@ public partial class Play : IAsyncDisposable
         });
         _hubConnection.On(IGameEvents.EventNames.RoundCompleted, async () =>
         {
-            //_waitingForMonitor = false;
-            //await _player.SetSelectedCardAsync(null);
-            //await SetAppearClassNameDelayed();
             await InvokeAsync(StateHasChanged);
         });
 
@@ -184,11 +181,11 @@ public partial class Play : IAsyncDisposable
     {
         if (_game == null || _playerId == null) return;
 
-        _player = _game.Players.FirstOrDefault(x => x.Id == _playerId);
+        _player = _game.Players.FirstOrDefault(x => x.Id.ToString() == _playerId);
         if (_player == null)
         {
             var character = Character.Random(_game.AllCharacters());
-            _player = new Player(_playerId, character);
+            _player = new Player(PlayerId.From(_playerId), character);
             await AddPlayerAsync();
         }
 
@@ -220,14 +217,19 @@ public partial class Play : IAsyncDisposable
             await ProtectedLocalStorage.SetAsync(PlayerNameKey, _playerName);
         }
 
-        try
-        {
-            await _game.AddPlayerAsync(_player);
-        }
-        catch (ArgumentOutOfRangeException)
+        var addResult = await _game.AddPlayerAsync(_player);
+        if (addResult == AddPlayerResultType.NoSeatsLeft)
         {
             _gameIsFull = true;
+            _playerNameInfo = "The game is full.";
         }
+        //try
+        //{
+        //}
+        //catch (ArgumentOutOfRangeException)
+        //{
+        //    _gameIsFull = true;
+        //}
     }
 
     private async Task GameStateChangedAsync()
@@ -254,7 +256,7 @@ public partial class Play : IAsyncDisposable
         if (_player.SelectedCard == null) return false;
         if (_player.SelectedCard is AttackCard selectedAttackCard && card is AttackCard attackCard)
         {
-            return selectedAttackCard.Target.Id == attackCard.Target.Id;
+            return selectedAttackCard.Target == attackCard.Target;
         }
         return card.Type == _player.SelectedCard.Type;
     }

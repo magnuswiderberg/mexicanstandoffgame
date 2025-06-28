@@ -1,31 +1,32 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Game.Model;
 using Common.BotPlay;
 using Common.Cards;
+using Common.Model;
+#pragma warning disable CA1001
 #pragma warning disable CA1031
 
 namespace Game.Bots;
 
-public class ApiBot : BotPlayer, IDisposable
+public class ApiBot : BotPlayer
 {
-    private readonly Uri _actionUrl;
-    private readonly Uri _roundResultUrl;
+    private readonly Uri _baseUrl;
     private readonly HttpClient _httpClient = new();
+
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
-        /*TODO: TypeNameHandling = TypeNameHandling.All*/
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public ApiBot(Uri actionUrl, Uri roundResultUrl, string authorizationHeader, string id, Character character) : base(id, character)
+    public ApiBot(Uri baseUrl, PlayerId id, string name, Character character) : base(id, name, character)
     {
-        _actionUrl = actionUrl;
-        _roundResultUrl = roundResultUrl;
+        _baseUrl = new Uri(baseUrl.AbsoluteUri.TrimEnd('/') + "/");
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
-        _httpClient.DefaultRequestHeaders.Authorization = AuthenticationHeaderValue.Parse(authorizationHeader);
     }
 
     public override async Task<Card> ChooseCard(IReadOnlyList<Card> selectableCards, Logic.Game game)
@@ -34,7 +35,8 @@ public class ApiBot : BotPlayer, IDisposable
         {
             var gameActions = CreateGameContext(game.Id, game.Rounds, game.Players, game.Rules, selectableCards);
                 
-            using var request = new HttpRequestMessage(HttpMethod.Post, _actionUrl);
+            var url = new Uri(_baseUrl, "actions");
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Content = new StringContent(JsonSerializer.Serialize(gameActions, JsonSerializerOptions), Encoding.UTF8, "application/json");
                 
             var response = await _httpClient.SendAsync(request);
@@ -62,8 +64,8 @@ public class ApiBot : BotPlayer, IDisposable
         }
         catch (Exception e)
         {
-            game.LastRound.Errors.Add($"ChooseCard: Bot {Id} ({Name}; {_actionUrl}) failed: {e.Message}. (Using Dodge card this round)");
-            return selectableCards.FirstOrDefault(x => x.Type == CardType.Dodge)!;
+            game.LastRound.Errors.Add(new(Id, $"Bot {Name} ({Id}, {_baseUrl}) failed to select card: {e.Message}. (Using Dodge card this round)"));
+            return selectableCards.First(x => x.Type == CardType.Dodge);
         }
     }
 
@@ -71,7 +73,8 @@ public class ApiBot : BotPlayer, IDisposable
     {
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, _roundResultUrl);
+            var url = new Uri(_baseUrl, "results");
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Content = new StringContent(JsonSerializer.Serialize(roundResult, JsonSerializerOptions), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request);
@@ -82,11 +85,11 @@ public class ApiBot : BotPlayer, IDisposable
         }
         catch (Exception e)
         {
-            game.LastRound.Errors.Add($"RoundResult: Bot {Id} ({Name}) failed: {e.Message}. (Using Dodge card this round)");
+            game.LastRound.Errors.Add(new(Id, $"Unable to POST RoundResult to bot {Name} ({Id}): {e.Message}."));
         }
     }
 
-    public static GameContext CreateGameContext(string gameId, int roundNumber, IEnumerable<Player> players, Rules rules, IEnumerable<Card> selectableCards)
+    public GameContext CreateGameContext(string gameId, int roundNumber, IReadOnlyList<Player> players, Rules rules, IEnumerable<Card> selectableCards)
     {
         var gameActions = new GameContext
         {
@@ -94,28 +97,34 @@ public class ApiBot : BotPlayer, IDisposable
             RoundNumber = roundNumber,
             SelectableCards = [.. selectableCards],
 
-            Players = [.. players.Select(x => new PlayerState
+            Me = new PlayerState
             {
-                Id = x.Id,
-                Character = x.Character,
-                Alive = x.Alive,
-                Coins = x.Coins,
-                Shots = x.Shots,
-                Bullets = x.Bullets
-            })],
+                PlayerId = Id.ToString(),
+                Alive = Alive,
+                Coins = Coins,
+                Shots = Shots,
+                Bullets = Bullets
+            },
+            
+            OtherPlayers = [.. players
+                .Where(x => x.Id != Id)
+                .Select(x => new PlayerState
+                {
+                    PlayerId = x.Id.Value,
+                    Alive = x.Alive,
+                    Coins = x.Coins,
+                    Shots = x.Shots,
+                    Bullets = x.Bullets
+                })],
 
             Rules = new RuleSet
             {
                 CoinsToWin = rules.CoinsToWin,
                 ShotsToDie = rules.ShotsToDie,
-                MaxBullets = rules.MaxBullets
+                MaxBullets = rules.MaxBullets,
+                ChestsPerPlayerCount = rules.ChestsPerPlayerCount,
             }
         };
         return gameActions;
-    }
-
-    public void Dispose()
-    {
-        _httpClient.Dispose();
     }
 }

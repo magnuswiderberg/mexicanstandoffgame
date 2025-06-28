@@ -8,5 +8,6 @@ public class GameContext
     public RuleSet Rules { get; set; } = null!;
     public int RoundNumber { get; set; }
     public IReadOnlyList<Card> SelectableCards { get; set; } = null!;
-    public IReadOnlyList<PlayerState> Players { get; set; } = null!;
+    public PlayerState Me { get; set; } = null!;
+    public IReadOnlyList<PlayerState> OtherPlayers { get; set; } = null!;
 }

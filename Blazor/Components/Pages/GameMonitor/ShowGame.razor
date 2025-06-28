@@ -1,5 +1,4 @@
-﻿@using System.Text.Json
-@using Common.Model
+﻿@using Common.Model
 @using Game.Bots
 @using Game.Logic
 @using Microsoft.AspNetCore.SignalR.Client
@@ -13,18 +12,18 @@
 <div class="relative mx-auto flex flex-col items-center">
 
     <div class="relative mt-10 flex flex-col items-center rounded-xl bg-white p-4 shadow-lg">
-        <h2 class="border-b border-neutral-300 px-4 pb-1">
+        <div class="border-b border-neutral-300 px-4 pb-1">
             Round @Game.Rounds
             @if (Game.State is GameState.Ended)
             {
                 <span> &ndash; Game over</span>
             }
-        </h2>
-        <h2>
+        </div>
+        <div>
             @Game.Rules.CoinsToWin @(Game.Rules.CoinsToWin == 1 ? "coin" : "coins") to win,
             max @Game.Rules.ChestsPerPlayerCount[Game.Players.Count] on chest,
             max @Game.Rules.MaxBullets bullets in gun
-        </h2>
+        </div>
 
         @if (_tutorialStep == 1)
         {
@@ -96,6 +95,9 @@
                     case RoundActionType.Load:
                         <text>@(result.TargetPlayers.Count == 1 ? "loads" : "load") the gun</text>
                         <i class="load monitor-size"></i>
+                        break;
+                    case RoundActionType.Error:
+                        <pre class="max-w-[30rem] whitespace-pre-wrap text-red-600">Error: @result.Error</pre>
                         break;
                 }
             </div>
